@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    // Target & Module
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ESNext"],
+
+    // Output
+    "rootDir": ".",
+    "noEmit": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+
+    // Strict
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+
+    // Decorators (for Prisma / class-validator)
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    // Interop
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+  },
+  "exclude": ["node_modules"]
+}
