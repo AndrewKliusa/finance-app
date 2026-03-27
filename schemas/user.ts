@@ -5,4 +5,6 @@ export const UserSchema = z.object({
     password: z.string().min(8)
 })
 
+export const UserResponseSchema = UserSchema.omit({ password: true })
+
 export type UserType = z.infer<typeof UserSchema>

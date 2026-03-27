@@ -9,8 +9,8 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  password  String
-  name  String
+  id        String   @id @default(uuid())
+  password  String   @db.VarChar(100)
+  name      String   @unique
   createdAt DateTime @default(now())
 }
