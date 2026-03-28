@@ -6,11 +6,10 @@
   "scripts": {
     "dev": "dotenv -e .env -- npx tsx main.ts",
     "dev:migrate": "dotenv -e .env -- prisma migrate deploy",
-    "dev:test": "dotenv -e .env.test -- npx tsx main.ts",
+    "dev:reset": "dotenv -e .env -- prisma migrate reset --force",
     "test:migrate": "dotenv -e .env.test -- prisma migrate deploy",
     "test:run": "dotenv -e .env.test -- vitest run",
-    "test:reset": "dotenv -e .env.test -- prisma migrate reset --force",
-    "test": "npm run test:migrate && npm run test:run && npm run test:reset"
+    "test": "npm run test:migrate && npm run test:run"
   },
   "keywords": [],
   "author": "",

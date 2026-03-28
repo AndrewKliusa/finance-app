@@ -1,3 +1,5 @@
 node_modules
 .env
+.env.test
+.vscode
 /generated/prisma
