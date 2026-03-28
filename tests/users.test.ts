@@ -1,12 +1,14 @@
 import { afterAll, beforeAll, describe, expect, it, afterEach } from 'vitest'
 import { buildServer } from '../server'
-import { UserCreateType } from '../schemas/user';
+import { UserCreateType, UserCreateSchema, UserEditType } from '../schemas/user';
 import { prisma } from '../database';
 import { beforeEach } from 'node:test';
-import { emptyUUID } from '../errorHandler';
+import { emptyUUID, testFunctionsBuilder } from './helpers';
 
 const URL = "/api/v1/users"
 const server = buildServer()
+
+const { get, post, del, patch } = testFunctionsBuilder<UserCreateType, UserEditType>(server, URL)
 
 describe("User routes", () => {
     it("Creates a user", async () => {
@@ -51,6 +53,14 @@ describe("User routes", () => {
         expect(res.statusCode).toBe(404)
     })
 
+    it("Changes user name", async () => {
+        const postRes = await post({ name: "andrw", password: "test1234" })
+        const patchRes = await patch(postRes.json().id, { name: "andrew"})
+
+        expect(patchRes.statusCode).toBe(200)
+        expect(patchRes.json().name).toBe("andrew")
+    })
+
     it("Uses wrong input for operations", async () => {
         const postRes = await post({ name: "-1", password: "" })
         const getRes = await get("123")
@@ -61,28 +71,6 @@ describe("User routes", () => {
         expect(delRes.statusCode).toBe(400)
     })
 })
-
-async function get(userId: string) {
-    return await server.inject({
-        method: 'GET',
-        url: `${URL}/${userId}`
-    })
-}
-
-async function post(payload: UserCreateType) {
-    return await server.inject({
-        method: 'POST',
-        url: URL,
-        payload: payload
-    })
-}
-
-async function del(userId: string) {
-    return await server.inject({
-        method: 'DELETE',
-        url: `${URL}/${userId}`
-    })
-}
 
 beforeAll(async () => {
     await server.ready()
@@ -103,83 +91,85 @@ afterEach(async () => {
 // ADDITIONAL AI GENERATED TESTS
 // TESTS BELOW WERE NOT WRITTEN BY ME
 
-it("(AI) Does not expose password in POST response", async () => {
-    const res = await post({ name: "andrew", password: "test1234" })
+describe("(AI) User routes", async () => {
+    it("(AI) Does not expose password in POST response", async () => {
+        const res = await post({ name: "andrew", password: "test1234" })
 
-    expect(res.json()).not.toHaveProperty("password")
-})
+        expect(res.json()).not.toHaveProperty("password")
+    })
 
-it("(AI) Does not expose password in GET response", async () => {
-    const postRes = await post({ name: "andrew", password: "test1234" })
-    const getRes = await get(postRes.json().id)
+    it("(AI) Does not expose password in GET response", async () => {
+        const postRes = await post({ name: "andrew", password: "test1234" })
+        const getRes = await get(postRes.json().id)
 
-    expect(getRes.json()).not.toHaveProperty("password")
-})
+        expect(getRes.json()).not.toHaveProperty("password")
+    })
 
-it("(AI) Does not expose password in DELETE response", async () => {
-    const postRes = await post({ name: "andrew", password: "test1234" })
-    const delRes = await del(postRes.json().id)
+    it("(AI) Does not expose password in DELETE response", async () => {
+        const postRes = await post({ name: "andrew", password: "test1234" })
+        const delRes = await del(postRes.json().id)
 
-    expect(delRes.json()).not.toHaveProperty("password")
-})
+        expect(delRes.json()).not.toHaveProperty("password")
+    })
 
-it("(AI) POST response contains expected fields", async () => {
-    const res = await post({ name: "andrew", password: "test1234" })
-    const body = res.json()
+    it("(AI) POST response contains expected fields", async () => {
+        const res = await post({ name: "andrew", password: "test1234" })
+        const body = res.json()
 
-    expect(body).toHaveProperty("id")
-    expect(body).toHaveProperty("name", "andrew")
-    expect(body).toHaveProperty("createdAt")
-})
+        expect(body).toHaveProperty("id")
+        expect(body).toHaveProperty("name", "andrew")
+        expect(body).toHaveProperty("createdAt")
+    })
 
-it("(AI) Rejects a name that is too long", async () => {
-    const res = await post({ name: "a".repeat(256), password: "test1234" })
+    it("(AI) Rejects a name that is too long", async () => {
+        const res = await post({ name: "a".repeat(256), password: "test1234" })
 
-    expect(res.statusCode).toBe(400)
-})
+        expect(res.statusCode).toBe(400)
+    })
 
-it("(AI) Rejects a password that is too short", async () => {
-    const res = await post({ name: "andrew", password: "123" })
+    it("(AI) Rejects a password that is too short", async () => {
+        const res = await post({ name: "andrew", password: "123" })
 
-    expect(res.statusCode).toBe(400)
-})
+        expect(res.statusCode).toBe(400)
+    })
 
-it("(AI) Trims or rejects a name with only whitespace", async () => {
-    const res = await post({ name: "   ", password: "test1234" })
+    it("(AI) Trims or rejects a name with only whitespace", async () => {
+        const res = await post({ name: "   ", password: "test1234" })
 
-    expect(res.statusCode).toBe(400)
-})
+        expect(res.statusCode).toBe(400)
+    })
 
-it("(AI) Gets a non-existent user", async () => {
-    const res = await get(emptyUUID)
+    it("(AI) Gets a non-existent user", async () => {
+        const res = await get(emptyUUID)
 
-    expect(res.statusCode).toBe(404)
-})
+        expect(res.statusCode).toBe(404)
+    })
 
-it("(AI) Returns a structured error body on validation failure", async () => {
-    const res = await get("not-a-uuid")
-    const body = res.json()
+    it("(AI) Returns a structured error body on validation failure", async () => {
+        const res = await get("not-a-uuid")
+        const body = res.json()
 
-    expect(res.statusCode).toBe(400)
-    expect(body).toHaveProperty("message", "Validation error")
-    expect(body).toHaveProperty("errors")
-    expect(Array.isArray(body.errors)).toBe(true)
-})
+        expect(res.statusCode).toBe(400)
+        expect(body).toHaveProperty("message", "Validation error")
+        expect(body).toHaveProperty("errors")
+        expect(Array.isArray(body.errors)).toBe(true)
+    })
 
-it("(AI) Returns a structured error body on 409 conflict", async () => {
-    await post({ name: "andrew", password: "test1234" })
-    const res = await post({ name: "andrew", password: "test1234" })
-    const body = res.json()
+    it("(AI) Returns a structured error body on 409 conflict", async () => {
+        await post({ name: "andrew", password: "test1234" })
+        const res = await post({ name: "andrew", password: "test1234" })
+        const body = res.json()
 
-    expect(res.statusCode).toBe(409)
-    expect(body).toHaveProperty("message")
-    expect(body.message).toMatch(/name/i)
-})
+        expect(res.statusCode).toBe(409)
+        expect(body).toHaveProperty("message")
+        expect(body.message).toMatch(/name/i)
+    })
 
-it("(AI) Returns a structured error body on 404", async () => {
-    const res = await get(emptyUUID)
-    const body = res.json()
+    it("(AI) Returns a structured error body on 404", async () => {
+        const res = await get(emptyUUID)
+        const body = res.json()
 
-    expect(res.statusCode).toBe(404)
-    expect(body).toHaveProperty("message")
+        expect(res.statusCode).toBe(404)
+        expect(body).toHaveProperty("message")
+    })
 })

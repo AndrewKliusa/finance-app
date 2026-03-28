@@ -27,5 +27,3 @@ export function errorHandler(error: FastifyError, _request: FastifyRequest, repl
     console.error(error)
     return reply.code(500).send({ message: "Internal server error" })
 }
-
-export const emptyUUID = "00000000-0000-0000-0000-000000000000"

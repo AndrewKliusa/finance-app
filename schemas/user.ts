@@ -9,7 +9,9 @@ export const UserSchema = z.object({
 
 export const UserCreateSchema = UserSchema.pick({ name: true, password: true })
 export const UserResponseSchema = UserSchema.omit({ password: true })
+export const UserEditSchema = UserSchema.pick({ name: true })
 
 export type UserType = z.infer<typeof UserSchema>
 export type UserResponseType = z.infer<typeof UserResponseSchema>
 export type UserCreateType = z.infer<typeof UserCreateSchema>
+export type UserEditType = z.infer<typeof UserEditSchema>

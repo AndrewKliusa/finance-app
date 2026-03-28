@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { UserCreateSchema, UserResponseSchema, UserSchema } from '../schemas/user'
+import { UserCreateSchema, UserEditSchema, UserResponseSchema, UserSchema } from '../schemas/user'
 import { ZodServer } from "../types/ZodServer"
 import { prisma } from '../database'
 import argon2 from 'argon2';
@@ -25,7 +25,7 @@ export async function userRoutes(server: ZodServer) {
         reply.code(201).send(user);
     })
 
-     server.get('/users/:id', {
+    server.get('/users/:id', {
         schema: {
             tags: ['Users'],
             params: z.object({ id: z.uuid() }),
@@ -40,6 +40,32 @@ export async function userRoutes(server: ZodServer) {
         const user = await prisma.user.findUnique({
             where: { id: id },
             omit: { password: true }
+        })
+
+        if (!user) {
+            return reply.code(404).send({ message: "User with this ID does not exist!" })
+        }
+
+        reply.code(200).send(user)
+    })
+
+    server.patch('/users/:id', {
+        schema: {
+            tags: ['Users'],
+            body: UserEditSchema,
+            params: z.object({ id: z.uuid() }),
+            response: {
+                200: UserResponseSchema,
+                404: z.object({ message: z.string() })
+            }
+        }
+    }, async (request, reply) => {
+        const { id } = request.params
+
+        const user = await prisma.user.update({
+            where: { id: id },
+            omit: { password: true },
+            data: request.body
         })
 
         if (!user) {
