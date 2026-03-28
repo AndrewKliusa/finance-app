@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { UserCreateSchema, UserEditSchema, UserResponseSchema, UserSchema } from '../schemas/user'
+import { GetUsersQuerySchema, UserCreateSchema, UserEditSchema, UserResponseSchema, UserSchema } from '../schemas/user'
 import { ZodServer } from "../types/ZodServer"
 import { prisma } from '../database'
 import argon2 from 'argon2';
@@ -22,7 +22,26 @@ export async function userRoutes(server: ZodServer) {
             omit: { password: true }
         })
 
-        reply.code(201).send(user);
+        return reply.code(201).send(user);
+    })
+
+    server.get('/users', {
+        schema: {
+            tags: ['Users'],
+            querystring: GetUsersQuerySchema,
+            response: {
+                200: z.array(UserResponseSchema)
+            }
+        }
+    }, async (request, reply) => {
+        const { page, limit } = request.query
+
+        const users = await prisma.user.findMany({
+            take: limit,
+            skip: (page - 1) * limit
+        })
+
+        return reply.code(200).send(users)
     })
 
     server.get('/users/:id', {
@@ -46,7 +65,7 @@ export async function userRoutes(server: ZodServer) {
             return reply.code(404).send({ message: "User with this ID does not exist!" })
         }
 
-        reply.code(200).send(user)
+        return reply.code(200).send(user)
     })
 
     server.patch('/users/:id', {
@@ -72,7 +91,7 @@ export async function userRoutes(server: ZodServer) {
             return reply.code(404).send({ message: "User with this ID does not exist!" })
         }
 
-        reply.code(200).send(user)
+        return reply.code(200).send(user)
     })
 
     server.delete('/users/:id',  {
@@ -92,6 +111,6 @@ export async function userRoutes(server: ZodServer) {
             omit: { password: true },
         })
 
-        reply.code(200).send(user);
+        return reply.code(200).send(user);
     })
 }

@@ -1,18 +1,24 @@
 import type { FastifyInstance } from "fastify";
 import type { InjectPayload } from "light-my-request";
-import { string } from "zod"
-import { UserCreateType } from "../schemas/user"
 
 export const emptyUUID = "00000000-0000-0000-0000-000000000000"
 
 export function testFunctionsBuilder
-    <POST_TYPE extends InjectPayload, PATCH_TYPE extends InjectPayload>
+    <POST_TYPE extends InjectPayload, PATCH_TYPE extends InjectPayload, QUERY_TYPE = undefined>
     (server: FastifyInstance, url: string) {
     return {
         async get(indentifier: string, path?: string) {
             return await server.inject({
                 method: 'GET',
                 url: `${url}/${indentifier}` + (path ? `/${path}` : "")
+            })
+        },
+
+        async query(query: QUERY_TYPE) {
+            return await server.inject({
+                method: 'GET',
+                url: `${url}`,
+                query: query ?? {}
             })
         },
 

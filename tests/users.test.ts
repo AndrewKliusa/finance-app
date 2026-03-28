@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, afterEach } from 'vitest'
 import { buildServer } from '../server'
-import { UserCreateType, UserCreateSchema, UserEditType } from '../schemas/user';
+import { UserCreateType, UserCreateSchema, UserEditType, GetUsersQuerySchema, GetUsersQueryType } from '../schemas/user';
 import { prisma } from '../database';
 import { beforeEach } from 'node:test';
 import { emptyUUID, testFunctionsBuilder } from './helpers';
@@ -8,7 +8,7 @@ import { emptyUUID, testFunctionsBuilder } from './helpers';
 const URL = "/api/v1/users"
 const server = buildServer()
 
-const { get, post, del, patch } = testFunctionsBuilder<UserCreateType, UserEditType>(server, URL)
+const { get, post, del, patch, query } = testFunctionsBuilder<UserCreateType, UserEditType, GetUsersQueryType>(server, URL)
 
 describe("User routes", () => {
     it("Creates a user", async () => {
@@ -59,6 +59,14 @@ describe("User routes", () => {
 
         expect(patchRes.statusCode).toBe(200)
         expect(patchRes.json().name).toBe("andrew")
+    })
+
+    it("Gets multiple users", async () => {
+        await post({ name: "andrew1", password: "test1234" })
+        await post({ name: "andrew2", password: "test1234" })
+        const getRes = await query({ page: 1, limit: 10 })
+
+        expect(getRes.json()).length(2)
     })
 
     it("Uses wrong input for operations", async () => {
