@@ -4,13 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "dotenv -e .env -- npx tsx server.ts",
+    "dev": "dotenv -e .env -- npx tsx main.ts",
     "dev:migrate": "dotenv -e .env -- prisma migrate deploy",
-    "dev:test": "dotenv -e .env.test -- npx tsx server.ts",
+    "dev:test": "dotenv -e .env.test -- npx tsx main.ts",
     "test:migrate": "dotenv -e .env.test -- prisma migrate deploy",
-    "test:run": "cd tests && bru run --env test",
+    "test:run": "dotenv -e .env.test -- vitest run",
     "test:reset": "dotenv -e .env.test -- prisma migrate reset --force",
-    "test": "npm run test:migrate & npm run test:run & npm run test:reset"
+    "test": "npm run test:migrate && npm run test:run && npm run test:reset"
   },
   "keywords": [],
   "author": "",
@@ -30,10 +30,12 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/supertest": "^7.2.0",
     "@usebruno/cli": "^3.2.0",
     "concurrently": "^9.2.1",
     "dotenv-cli": "^11.0.0",
     "prisma": "^6.19.2",
+    "vitest": "^4.1.2",
     "wait-on": "^9.0.4"
   }
 }

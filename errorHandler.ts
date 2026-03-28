@@ -13,5 +13,6 @@ export function errorHandler(error: FastifyError, _request: FastifyRequest, repl
         return reply.code(503).send({ message: "Failed to connect to database!"})
     }
 
+    console.error(error)
     return reply.code(500).send({ message: "Internal server error" })
 }
