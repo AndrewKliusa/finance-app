@@ -4,6 +4,7 @@ import { UserCreateType, UserCreateSchema, UserEditType, GetUsersQuerySchema, Ge
 import { prisma } from '../database';
 import { beforeEach } from 'node:test';
 import { emptyUUID, testFunctionsBuilder } from './helpers';
+import { redis } from '../redis';
 
 const URL = "/api/v1/users"
 const server = buildServer()
@@ -67,6 +68,17 @@ describe("User routes", () => {
         const getRes = await query({ page: 1, limit: 10 })
 
         expect(getRes.json()).length(2)
+    })
+
+    it("Gets user from cache", async () => {
+        const postRes = await post({ name: "andrew1", password: "test1234" })
+        const { id } = postRes.json()
+
+        await get(id)
+        const cachedUser = await redis.get(`user:${id}`)
+
+        expect(cachedUser).not.toBeNull()
+        expect(JSON.parse(cachedUser!)).toMatchObject({ id })
     })
 
     it("Uses wrong input for operations", async () => {
