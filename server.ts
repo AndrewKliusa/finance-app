@@ -2,11 +2,12 @@ import Fastify from 'fastify'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
 import { serializerCompiler, validatorCompiler, ZodTypeProvider } from 'fastify-type-provider-zod'
-import { userRoutes } from './routes/users'
-import { errorHandler } from './errorHandler'
+import { userRoutes } from './routes/users.route'
+import { errorHandler } from './plugins/errorHandler'
+import { authRoutes } from './routes/auth.route'
 
 export function buildServer() {
-    const server = Fastify().withTypeProvider<ZodTypeProvider>()
+    const server = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>()
 
     server.setValidatorCompiler(validatorCompiler)
     server.setSerializerCompiler(serializerCompiler)
@@ -22,9 +23,10 @@ export function buildServer() {
     })
 
     server.register(swaggerUi, {
-        routePrefix: '/docs'
+        routePrefix: '/api/v1/docs'
     })
 
     server.register(userRoutes, { prefix: '/api/v1' })
+    server.register(authRoutes, { prefix: '/api/v1' })
     return server
 }

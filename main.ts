@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import { buildServer } from './server'
-import { enviromentSchema } from './schemas/env'
+import { enviromentSchema } from './schemas/env.schema'
 
 enviromentSchema.parse(process.env)
 const server =  buildServer()

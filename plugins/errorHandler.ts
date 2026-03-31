@@ -1,14 +1,14 @@
 import { FastifyError, FastifyReply, FastifyRequest } from "fastify"
-import { Prisma } from './generated/prisma'
+import { Prisma } from '../generated/prisma/client'
 import { ZodError } from 'zod'
 
 export function errorHandler(error: FastifyError, _request: FastifyRequest, reply: FastifyReply) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        const conflictingField = error.meta?.target ?? error.meta?.cause
+        const conflictingField = error.meta?.target
         if (error.code === "P2002") {
             return reply.code(409).send({ message: `Object with this ${conflictingField} field already exists!`});
         } else if (error.code === "P2025") {
-            return reply.code(404).send({   message: `Object with this ${conflictingField} field does not exist!`});
+            return reply.code(404).send({   message: `Object with this field does not exist!`});
 
         }
     }

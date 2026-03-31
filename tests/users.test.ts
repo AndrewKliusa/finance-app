@@ -1,22 +1,22 @@
 import { afterAll, beforeAll, describe, expect, it, afterEach } from 'vitest'
 import { buildServer } from '../server'
-import { UserCreateType, UserCreateSchema, UserEditType, GetUsersQuerySchema, GetUsersQueryType } from '../schemas/user';
-import { prisma } from '../database';
+import { UserCreateType, UserCreateSchema, UserEditType, GetUsersQuerySchema, GetUsersQueryType } from '../schemas/user.schema';
+import { prisma } from '../lib/prisma';
 import { beforeEach } from 'node:test';
 import { emptyUUID, testFunctionsBuilder } from './helpers';
-import { redis } from '../redis';
+import { redis } from '../lib/redis';
 
 const URL = "/api/v1/users"
 const server = buildServer()
 
-const { get, post, del, patch, query } = testFunctionsBuilder<UserCreateType, UserEditType, GetUsersQueryType>(server, URL)
+const { get, del, patch, query } = testFunctionsBuilder<UserCreateType, UserEditType, GetUsersQueryType>(server, URL)
 
 describe("User routes", () => {
     it("Creates a user", async () => {
         const res = await post({ name: "andrew", password: "test1234" })
 
         expect(res.statusCode).toBe(201)
-        expect(res.json().name).toBe("andrew")
+        expect(res.json().user.name).toBe("andrew")
     })
 
     it("Creates a duplicate user", async () => {
@@ -28,18 +28,18 @@ describe("User routes", () => {
 
     it("Gets a user", async () => {
         const postRes = await post({ name: "andrew", password: "test1234" })
-        const getRes = await get(postRes.json().id)
+        const getRes = await get(postRes.json().user.id)
 
         expect(getRes.statusCode).toBe(200)
-        expect(getRes.json()).toEqual(postRes.json())
+        expect(getRes.json()).toEqual(postRes.json().user)
     })
 
     it("Deletes a user", async () => {
         const postRes = await post({ name: "andrew", password: "test1234" })
-        const delRes = await del(postRes.json().id)
+        const delRes = await del(postRes.json().user.id)
 
         expect(delRes.statusCode).toBe(200)
-        expect(delRes.json()).toEqual(postRes.json())
+        expect(delRes.json()).toEqual(postRes.json().user)
     })
 
     it("Gets a non-existent user", async () => {
@@ -56,7 +56,7 @@ describe("User routes", () => {
 
     it("Changes user name", async () => {
         const postRes = await post({ name: "andrw", password: "test1234" })
-        const patchRes = await patch(postRes.json().id, { name: "andrew"})
+        const patchRes = await patch(postRes.json().user.id, { name: "andrew"})
 
         expect(patchRes.statusCode).toBe(200)
         expect(patchRes.json().name).toBe("andrew")
@@ -107,6 +107,14 @@ beforeEach(async () => {
 afterEach(async () => {
     await prisma.user.deleteMany()
 })
+
+async function post(payload: UserCreateType) {
+    return await server.inject({
+        method: "POST",
+        url: "/api/v1/auth/register",
+        payload
+    })
+}
 
 // ADDITIONAL AI GENERATED TESTS
 // TESTS BELOW WERE NOT WRITTEN BY ME

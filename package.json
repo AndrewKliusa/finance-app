@@ -5,11 +5,13 @@
   "main": "index.js",
   "scripts": {
     "dev": "dotenv -e .env -- npx tsx main.ts",
+    "dev:push": "dotenv -e .env -- prisma db push",
     "dev:migrate": "dotenv -e .env -- prisma migrate deploy",
     "dev:reset": "dotenv -e .env -- prisma migrate reset --force",
-    "test:migrate": "dotenv -e .env.test -- prisma migrate deploy",
+    "test:push": "dotenv -e .env.test -- prisma db push",
     "test:run": "dotenv -e .env.test -- vitest run",
-    "test": "npm run test:migrate && npm run test:run"
+    "test:migrate": "dotenv -e .env.test -- prisma migrate deploy",
+    "test": "npm run test:push && npm run test:run"
   },
   "keywords": [],
   "author": "",
@@ -27,6 +29,7 @@
     "fastify": "^5.8.4",
     "fastify-type-provider-zod": "^6.1.0",
     "ioredis": "^5.10.1",
+    "jose": "^6.2.2",
     "zod": "^4.3.6"
   },
   "devDependencies": {
