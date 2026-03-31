@@ -1,8 +1,7 @@
-import { afterAll, beforeAll, describe, expect, it, afterEach } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, afterEach, beforeEach } from 'vitest'
 import { buildServer } from '../server'
 import { UserCreateType, UserCreateSchema, UserEditType, GetUsersQuerySchema, GetUsersQueryType } from '../schemas/user.schema';
 import { prisma } from '../lib/prisma';
-import { beforeEach } from 'node:test';
 import { createAdminUser, emptyUUID, testFunctionsBuilder } from './helpers';
 import { redis } from '../lib/redis';
 
@@ -68,7 +67,7 @@ describe("User routes", () => {
         await post({ name: "andrew2", password: "test1234" })
         const getRes = await query({ page: 1, limit: 10 })
 
-        expect(getRes.json()).length(2)
+        expect(getRes.json()).length(3)
     })
 
     it("Gets user from cache", async () => {
@@ -100,14 +99,19 @@ beforeAll(async () => {
 
 afterAll(async () => {
     await server.close()
+    await prisma.user.deleteMany()
 })
 
 beforeEach(async () => {
-    await prisma.user.deleteMany()
+    await prisma.user.deleteMany({
+        where: { name: { not: 'admin' } }
+    })
 })
 
 afterEach(async () => {
-    await prisma.user.deleteMany()
+    await prisma.user.deleteMany({
+        where: { name: { not: 'admin' } }
+    })
 })
 
 async function post(payload: UserCreateType) {

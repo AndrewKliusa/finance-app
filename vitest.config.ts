@@ -14,6 +14,7 @@ export default defineConfig({
             deps: {
                 inline: [/generated\/prisma/]
             }
-        }
+        },
+        fileParallelism: false
     }
 })

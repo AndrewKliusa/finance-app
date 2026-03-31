@@ -16,7 +16,7 @@ export async function createAdminUser() {
 }
 
 export function testFunctionsBuilder
-    <POST_TYPE extends InjectPayload, PATCH_TYPE extends InjectPayload, QUERY_TYPE = undefined>
+    <POST_TYPE extends InjectPayload, PATCH_TYPE extends InjectPayload, QUERY_TYPE = Record<string, unknown>>
     (server: FastifyInstance, url: string, getToken: () => string) {
 
     return {
