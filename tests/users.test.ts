@@ -3,13 +3,14 @@ import { buildServer } from '../server'
 import { UserCreateType, UserCreateSchema, UserEditType, GetUsersQuerySchema, GetUsersQueryType } from '../schemas/user.schema';
 import { prisma } from '../lib/prisma';
 import { beforeEach } from 'node:test';
-import { emptyUUID, testFunctionsBuilder } from './helpers';
+import { createAdminUser, emptyUUID, testFunctionsBuilder } from './helpers';
 import { redis } from '../lib/redis';
 
 const URL = "/api/v1/users"
 const server = buildServer()
 
-const { get, del, patch, query } = testFunctionsBuilder<UserCreateType, UserEditType, GetUsersQueryType>(server, URL)
+let accessToken: string;
+const { get, del, patch, query } = testFunctionsBuilder<UserCreateType, UserEditType, GetUsersQueryType>(server, URL, () => accessToken)
 
 describe("User routes", () => {
     it("Creates a user", async () => {
@@ -72,7 +73,7 @@ describe("User routes", () => {
 
     it("Gets user from cache", async () => {
         const postRes = await post({ name: "andrew1", password: "test1234" })
-        const { id } = postRes.json()
+        const { id } = postRes.json().user
 
         await get(id)
         const cachedUser = await redis.get(`user:${id}`)
@@ -94,6 +95,7 @@ describe("User routes", () => {
 
 beforeAll(async () => {
     await server.ready()
+    accessToken = await createAdminUser()
 })
 
 afterAll(async () => {
@@ -142,7 +144,7 @@ describe("(AI) User routes", async () => {
 
     it("(AI) POST response contains expected fields", async () => {
         const res = await post({ name: "andrew", password: "test1234" })
-        const body = res.json()
+        const body = res.json().user
 
         expect(body).toHaveProperty("id")
         expect(body).toHaveProperty("name", "andrew")

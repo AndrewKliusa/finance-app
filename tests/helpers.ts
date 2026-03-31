@@ -1,16 +1,30 @@
 import type { FastifyInstance } from "fastify";
 import type { InjectPayload } from "light-my-request";
+import { prisma } from "../lib/prisma";
+import { generateTokenPair } from "../services/auth.service";
 
 export const emptyUUID = "00000000-0000-0000-0000-000000000000"
 
+export async function createAdminUser() {
+    const admin = await prisma.user.create({
+        data: { name: "admin", password: "test123" },
+        omit: { password: true }
+    })
+
+    const { accessToken } = await generateTokenPair(admin.id)
+    return accessToken
+}
+
 export function testFunctionsBuilder
     <POST_TYPE extends InjectPayload, PATCH_TYPE extends InjectPayload, QUERY_TYPE = undefined>
-    (server: FastifyInstance, url: string) {
+    (server: FastifyInstance, url: string, getToken: () => string) {
+
     return {
         async get(indentifier: string, path?: string) {
             return await server.inject({
                 method: 'GET',
-                url: `${url}/${indentifier}` + (path ? `/${path}` : "")
+                url: `${url}/${indentifier}` + (path ? `/${path}` : ""),
+                headers: { authorization: `Bearer ${getToken()}` }
             })
         },
 
@@ -18,7 +32,8 @@ export function testFunctionsBuilder
             return await server.inject({
                 method: 'GET',
                 url: `${url}`,
-                query: query ?? {}
+                query: query ?? {},
+                headers: { authorization: `Bearer ${getToken()}` }
             })
         },
 
@@ -26,7 +41,8 @@ export function testFunctionsBuilder
             return await server.inject({
                 method: 'POST',
                 url: url + (path ? `/${path}` : ""),
-                payload
+                payload,
+                headers: { authorization: `Bearer ${getToken()}` }
             })
         },
 
@@ -34,14 +50,16 @@ export function testFunctionsBuilder
             return await server.inject({
                 method: 'PATCH',
                 url: `${url}/${identifier}` + (path ? `/${path}` : ""),
-                payload
+                payload,
+                headers: { authorization: `Bearer ${getToken()}` }
             })
         },
 
         async del(identifier: string, path?: string) {
             return await server.inject({
                 method: 'DELETE',
-                url: `${url}/${identifier}` + (path ? `/${path}` : "")
+                url: `${url}/${identifier}` + (path ? `/${path}` : ""),
+                headers: { authorization: `Bearer ${getToken()}` }
             })
         }
     }
