@@ -12,12 +12,14 @@ export async function generateTokenPair(userId: string) {
     const accessToken = await new SignJWT({ sub: userId })
         .setProtectedHeader({ alg: 'HS256' })
         .setExpirationTime(ACCESS_TOKEN_TTL)
+        .setJti(crypto.randomUUID())
         .setIssuedAt()
         .sign(accessSecret)
 
     const refreshToken = await new SignJWT({ sub: userId })
         .setProtectedHeader({ alg: 'HS256' })
         .setExpirationTime(REFRESH_TOKEN_TTL)
+        .setJti(crypto.randomUUID())
         .setIssuedAt()
         .sign(refreshSecret)
 

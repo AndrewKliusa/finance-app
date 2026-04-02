@@ -7,7 +7,7 @@ import { errorHandler } from './plugins/errorHandler'
 import { authRoutes } from './routes/auth.route'
 
 export function buildServer() {
-    const server = Fastify({ logger: false }).withTypeProvider<ZodTypeProvider>()
+    const server = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>()
 
     server.setValidatorCompiler(validatorCompiler)
     server.setSerializerCompiler(serializerCompiler)

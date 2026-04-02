@@ -4,42 +4,44 @@ import { UserCreateType, UserCreateSchema, UserEditType, GetUsersQuerySchema, Ge
 import { prisma } from '../lib/prisma';
 import { createAdminUser, emptyUUID, testFunctionsBuilder } from './helpers';
 import { redis } from '../lib/redis';
+import { register } from './auth.test';
 
 const URL = "/api/v1/users"
 const server = buildServer()
 
 let accessToken: string;
 const { get, del, patch, query } = testFunctionsBuilder<UserCreateType, UserEditType, GetUsersQueryType>(server, URL, () => accessToken)
+const noTokenUserFunctions = testFunctionsBuilder<UserCreateType, UserEditType, GetUsersQueryType>(server, URL, () => "dummytoken")
 
 describe("User routes", () => {
     it("Creates a user", async () => {
-        const res = await post({ name: "andrew", password: "test1234" })
+        const res = await register({ name: "andrew", password: "test1234" })
 
         expect(res.statusCode).toBe(201)
         expect(res.json().user.name).toBe("andrew")
     })
 
     it("Creates a duplicate user", async () => {
-        await post({ name: "andrew", password: "test1234" })
-        const res = await post({ name: "andrew", password: "test1234" })
+        await register({ name: "andrew", password: "test1234" })
+        const res = await register({ name: "andrew", password: "test1234" })
 
         expect(res.statusCode).toBe(409)
     })
 
     it("Gets a user", async () => {
-        const postRes = await post({ name: "andrew", password: "test1234" })
-        const getRes = await get(postRes.json().user.id)
+        const regRes = await register({ name: "andrew", password: "test1234" })
+        const getRes = await get(regRes.json().user.id)
 
         expect(getRes.statusCode).toBe(200)
-        expect(getRes.json()).toEqual(postRes.json().user)
+        expect(getRes.json()).toEqual(regRes.json().user)
     })
 
     it("Deletes a user", async () => {
-        const postRes = await post({ name: "andrew", password: "test1234" })
-        const delRes = await del(postRes.json().user.id)
+        const regRes = await register({ name: "andrew", password: "test1234" })
+        const delRes = await del(regRes.json().user.id)
 
         expect(delRes.statusCode).toBe(200)
-        expect(delRes.json()).toEqual(postRes.json().user)
+        expect(delRes.json()).toEqual(regRes.json().user)
     })
 
     it("Gets a non-existent user", async () => {
@@ -55,24 +57,24 @@ describe("User routes", () => {
     })
 
     it("Changes user name", async () => {
-        const postRes = await post({ name: "andrw", password: "test1234" })
-        const patchRes = await patch(postRes.json().user.id, { name: "andrew"})
+        const regRes = await register({ name: "andrw", password: "test1234" })
+        const patchRes = await patch(regRes.json().user.id, { name: "andrew"})
 
         expect(patchRes.statusCode).toBe(200)
         expect(patchRes.json().name).toBe("andrew")
     })
 
     it("Gets multiple users", async () => {
-        await post({ name: "andrew1", password: "test1234" })
-        await post({ name: "andrew2", password: "test1234" })
+        await register({ name: "andrew1", password: "test1234" })
+        await register({ name: "andrew2", password: "test1234" })
         const getRes = await query({ page: 1, limit: 10 })
 
         expect(getRes.json()).length(3)
     })
 
     it("Gets user from cache", async () => {
-        const postRes = await post({ name: "andrew1", password: "test1234" })
-        const { id } = postRes.json().user
+        const regRes = await register({ name: "andrew1", password: "test1234" })
+        const { id } = regRes.json().user
 
         await get(id)
         const cachedUser = await redis.get(`user:${id}`)
@@ -82,13 +84,20 @@ describe("User routes", () => {
     })
 
     it("Uses wrong input for operations", async () => {
-        const postRes = await post({ name: "-1", password: "" })
+        const regRes = await register({ name: "-1", password: "" })
         const getRes = await get("123")
         const delRes = await get("")
 
-        expect(postRes.statusCode).toBe(400)
+        expect(regRes.statusCode).toBe(400)
         expect(getRes.statusCode).toBe(400)
         expect(delRes.statusCode).toBe(400)
+    })
+
+    it("Gets a user using invalid token", async () => {
+        const regRes = await register({ name: "andrew1234", password: "test1234" })
+        const getRes = await noTokenUserFunctions.get(regRes.json().user.id)
+
+        expect(getRes.statusCode).toBe(401)
     })
 })
 
@@ -106,48 +115,42 @@ beforeEach(async () => {
     await prisma.user.deleteMany({
         where: { name: { not: 'admin' } }
     })
+    await redis.flushdb()
 })
 
 afterEach(async () => {
     await prisma.user.deleteMany({
         where: { name: { not: 'admin' } }
     })
+    await redis.flushdb()
 })
-
-async function post(payload: UserCreateType) {
-    return await server.inject({
-        method: "POST",
-        url: "/api/v1/auth/register",
-        payload
-    })
-}
 
 // ADDITIONAL AI GENERATED TESTS
 // TESTS BELOW WERE NOT WRITTEN BY ME
 
 describe("(AI) User routes", async () => {
-    it("(AI) Does not expose password in POST response", async () => {
-        const res = await post({ name: "andrew", password: "test1234" })
+    it("(AI) Does not expose password in register response", async () => {
+        const res = await register({ name: "andrew", password: "test1234" })
 
         expect(res.json()).not.toHaveProperty("password")
     })
 
     it("(AI) Does not expose password in GET response", async () => {
-        const postRes = await post({ name: "andrew", password: "test1234" })
-        const getRes = await get(postRes.json().id)
+        const regRes = await register({ name: "andrew", password: "test1234" })
+        const getRes = await get(regRes.json().id)
 
         expect(getRes.json()).not.toHaveProperty("password")
     })
 
     it("(AI) Does not expose password in DELETE response", async () => {
-        const postRes = await post({ name: "andrew", password: "test1234" })
-        const delRes = await del(postRes.json().id)
+        const regRes = await register({ name: "andrew", password: "test1234" })
+        const delRes = await del(regRes.json().id)
 
         expect(delRes.json()).not.toHaveProperty("password")
     })
 
-    it("(AI) POST response contains expected fields", async () => {
-        const res = await post({ name: "andrew", password: "test1234" })
+    it("(AI) register response contains expected fields", async () => {
+        const res = await register({ name: "andrew", password: "test1234" })
         const body = res.json().user
 
         expect(body).toHaveProperty("id")
@@ -156,19 +159,19 @@ describe("(AI) User routes", async () => {
     })
 
     it("(AI) Rejects a name that is too long", async () => {
-        const res = await post({ name: "a".repeat(256), password: "test1234" })
+        const res = await register({ name: "a".repeat(256), password: "test1234" })
 
         expect(res.statusCode).toBe(400)
     })
 
     it("(AI) Rejects a password that is too short", async () => {
-        const res = await post({ name: "andrew", password: "123" })
+        const res = await register({ name: "andrew", password: "123" })
 
         expect(res.statusCode).toBe(400)
     })
 
     it("(AI) Trims or rejects a name with only whitespace", async () => {
-        const res = await post({ name: "   ", password: "test1234" })
+        const res = await register({ name: "   ", password: "test1234" })
 
         expect(res.statusCode).toBe(400)
     })
@@ -190,8 +193,8 @@ describe("(AI) User routes", async () => {
     })
 
     it("(AI) Returns a structured error body on 409 conflict", async () => {
-        await post({ name: "andrew", password: "test1234" })
-        const res = await post({ name: "andrew", password: "test1234" })
+        await register({ name: "andrew", password: "test1234" })
+        const res = await register({ name: "andrew", password: "test1234" })
         const body = res.json()
 
         expect(res.statusCode).toBe(409)
