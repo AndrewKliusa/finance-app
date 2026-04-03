@@ -2,7 +2,7 @@ import argon2 from "argon2"
 import { prisma } from "../lib/prisma";
 
 export async function seed() {
-    const user = await prisma.user.upsert({
+    await prisma.user.upsert({
         where: { name: "admin" },
         update: {},
         create: {

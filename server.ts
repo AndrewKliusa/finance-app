@@ -30,6 +30,6 @@ export function buildServer() {
     server.register(userRoutes, { prefix: '/api/v1' })
     server.register(authRoutes, { prefix: '/api/v1' })
 
-    seed().catch(console.error)
+    server.register(async () => { await seed() })
     return server
 }

@@ -7,9 +7,9 @@ export const AuthResponseSchema = z.object({
     user: UserResponseSchema
 })
 
-export const AuthRefreshResponseSchema = AuthResponseSchema.omit({ user: true })
-export const RefreshSchema = AuthRefreshResponseSchema.pick({ refreshToken: true })
+export const AccessAndRefreshTokenSchema = AuthResponseSchema.omit({ user: true })
+export const RefreshTokenSchema = AccessAndRefreshTokenSchema.pick({ refreshToken: true })
 
 export type AuthReponseSchemaType = z.infer<typeof AuthResponseSchema>
-export type AuthRefreshResponseType = z.infer<typeof AuthRefreshResponseSchema>
-export type RefreshType = z.infer<typeof RefreshSchema>
+export type AccessAndRefreshTokenType = z.infer<typeof AccessAndRefreshTokenSchema>
+export type RefreshTokenType = z.infer<typeof RefreshTokenSchema>

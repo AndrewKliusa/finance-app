@@ -2,16 +2,14 @@ import { afterAll, beforeAll, describe, expect, it, afterEach, beforeEach } from
 import { buildServer } from '../server'
 import { UserCreateType, UserCreateSchema, UserEditType, GetUsersQuerySchema, GetUsersQueryType } from '../schemas/user.schema';
 import { prisma } from '../lib/prisma';
-import { getAdminToken, emptyUUID, testFunctionsBuilder } from './helpers';
+import { generateAdminToken, emptyUUID, userFunctionsBuilder, adminAccessToken } from './helpers';
 import { redis } from '../lib/redis';
 import { login, register } from './auth.test';
 
-const URL = "/api/v1/users"
 const server = buildServer()
 
-let accessToken: string;
-const { get, del, patch, query } = testFunctionsBuilder<UserCreateType, UserEditType, GetUsersQueryType>(server, URL, () => accessToken)
-const noTokenUserFunctions = testFunctionsBuilder<UserCreateType, UserEditType, GetUsersQueryType>(server, URL, () => "dummytoken")
+const { get, del, patch, query } = userFunctionsBuilder<UserCreateType, UserEditType, GetUsersQueryType>(server, () => adminAccessToken)
+const noTokenUserFunctions = userFunctionsBuilder<UserCreateType, UserEditType, GetUsersQueryType>(server, () => "dummytoken")
 
 describe("User routes", () => {
     it("Creates a user", async () => {
@@ -144,7 +142,7 @@ describe("User routes", () => {
 
 beforeAll(async () => {
     await server.ready()
-    accessToken = await getAdminToken()
+    await generateAdminToken()
 })
 
 afterAll(async () => {

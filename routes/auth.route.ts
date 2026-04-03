@@ -1,10 +1,12 @@
 import z from "zod";
 import { prisma } from "../lib/prisma";
-import { AuthRefreshResponseSchema, AuthResponseSchema, RefreshSchema } from "../schemas/auth.schema";
+import { AccessAndRefreshTokenSchema, AuthResponseSchema, RefreshTokenSchema } from "../schemas/auth.schema";
 import { UserCreateSchema, UserResponseSchema } from "../schemas/user.schema";
 import { generateTokenPair, revokeRefreshToken, rotateRefreshToken } from "../services/auth.service";
 import { ZodServer } from "../types/ZodServer";
 import argon2 from 'argon2'
+import { adminOnly } from "../plugins/adminOnly";
+import { authenticate } from "../plugins/authenticate";
 
 export async function authRoutes(server: ZodServer) {
     server.post("/auth/register", {
@@ -63,9 +65,9 @@ export async function authRoutes(server: ZodServer) {
     server.post("/auth/refresh", {
         schema: {
             tags: ["Auth"],
-            body: RefreshSchema,
+            body: RefreshTokenSchema,
             response: {
-                200: AuthRefreshResponseSchema,
+                200: AccessAndRefreshTokenSchema,
                 401: z.object({ message: z.string()})
             }
         }
@@ -83,7 +85,7 @@ export async function authRoutes(server: ZodServer) {
     server.post("/auth/logout", {
         schema: {
             tags: ["Auth"],
-            body: RefreshSchema,
+            body: RefreshTokenSchema,
             response: {
                 204: z.void(),
                 401: z.object({ message: z.string()})
@@ -98,5 +100,26 @@ export async function authRoutes(server: ZodServer) {
         } catch {
             return reply.code(401).send({ message: "Invalid refresh token!" })
         }
+    })
+
+    server.post("/auth/promoteAdmin/:id", {
+        schema: {
+            tags: ["Auth"],
+            params: z.object({ id: z.uuid() }),
+            response: {
+                201: AuthResponseSchema
+            }
+        },
+        preHandler: [authenticate, adminOnly]
+    }, async (request, reply) => {   
+        const { id } =  request.params
+        
+        const admin = await prisma.user.update({
+            where: { id },
+            data: { role: "ADMIN" }
+        })
+        
+        const tokens = await generateTokenPair(admin.id)
+        return reply.code(201).send({ ...tokens, user: admin })
     })
 }

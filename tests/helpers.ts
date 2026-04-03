@@ -4,25 +4,26 @@ import { prisma } from "../lib/prisma";
 import { generateTokenPair } from "../services/auth.service";
 
 export const emptyUUID = "00000000-0000-0000-0000-000000000000"
+export let adminAccessToken: string;
 
-export async function getAdminToken() {
-    const admin = await prisma.user.findUnique({
+export async function generateAdminToken() {
+    const admin = await prisma.user.findFirst({
         where: { name: "admin" }
     })
 
     const { accessToken } = await generateTokenPair(admin!.id)
-    return accessToken
+    adminAccessToken = accessToken
 }
 
-export function testFunctionsBuilder
+export function userFunctionsBuilder
     <POST_TYPE extends InjectPayload, PATCH_TYPE extends InjectPayload, QUERY_TYPE = Record<string, unknown>>
-    (server: FastifyInstance, url: string, getToken: () => string) {
+    (server: FastifyInstance, getToken: () => string) {
 
     return {
         async get(indentifier: string, path?: string) {
             return await server.inject({
                 method: 'GET',
-                url: `${url}/${indentifier}` + (path ? `/${path}` : ""),
+                url: `/api/v1/users/${indentifier}` + (path ? `/${path}` : ""),
                 headers: { authorization: `Bearer ${getToken()}` }
             })
         },
@@ -30,7 +31,7 @@ export function testFunctionsBuilder
         async query(query: QUERY_TYPE) {
             return await server.inject({
                 method: 'GET',
-                url: `${url}`,
+                url: "/api/v1/users",
                 query: query ?? {},
                 headers: { authorization: `Bearer ${getToken()}` }
             })
@@ -39,7 +40,7 @@ export function testFunctionsBuilder
         async post(payload: POST_TYPE, path?: string) {
             return await server.inject({
                 method: 'POST',
-                url: url + (path ? `/${path}` : ""),
+                url: "/api/v1/users" + (path ? `/${path}` : ""),
                 payload,
                 headers: { authorization: `Bearer ${getToken()}` }
             })
@@ -48,7 +49,7 @@ export function testFunctionsBuilder
         async patch(identifier: string, payload: PATCH_TYPE, path?: string, token?: string) {
             return await server.inject({
                 method: 'PATCH',
-                url: `${url}/${identifier}` + (path ? `/${path}` : ""),
+                url: `/api/v1/users/${identifier}` + (path ? `/${path}` : ""),
                 payload,
                 headers: { authorization: token ? `Bearer ${token}` : `Bearer ${getToken()}` }
             })
@@ -57,7 +58,7 @@ export function testFunctionsBuilder
         async del(identifier: string, path?: string, token?: string) {
             return await server.inject({
                 method: 'DELETE',
-                url: `${url}/${identifier}` + (path ? `/${path}` : ""),
+                url: `/api/v1/users/${identifier}` + (path ? `/${path}` : ""),
                 headers: { authorization: token ? `Bearer ${token}` : `Bearer ${getToken()}` }
             })
         }

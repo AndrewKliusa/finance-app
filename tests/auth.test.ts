@@ -1,11 +1,15 @@
 import { buildServer } from "../server"
 import { GetUsersQueryType, UserCreateType, UserEditType } from '../schemas/user.schema';
-import { RefreshType } from "../schemas/auth.schema";
+import { RefreshTokenType } from "../schemas/auth.schema";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "../lib/prisma";
 import { redis } from "../lib/redis";
+import { adminAccessToken, userFunctionsBuilder } from './helpers';
+import { generateAdminToken } from "./helpers";
 
 const server = buildServer()
+
+const { del } = userFunctionsBuilder(server, () => adminAccessToken)
 
 describe("Authentification", async () => {
     it("Checks user auth keys upon creation", async () => {
@@ -43,10 +47,31 @@ describe("Authentification", async () => {
         expect(loginRes.json().user.name).toBe("andrew1234")
         expect(loginRes.json().user.password).toBeUndefined()
     })
+
+    it("Promotes another user to admin", async () => {
+        const regRes = await register({ name: "andrew1234", password: "test1234" })
+        const regResTwo = await register({ name: "andrew2", password: "test1234" })
+
+        const delRes = await del(regResTwo.json().user.id, "", regRes.json().refreshToken)
+        expect(delRes.statusCode).toBe(401)
+
+        const adminRes = await promoteAdmin(regRes.json().user.id, adminAccessToken)
+        await del(regResTwo.json().user.id, "", adminRes.json().refreshToken)
+
+        expect(adminRes.statusCode).toBe(201)
+    })
+
+    it("Promotes a user to admin without admin permissions", async () => {
+        const regRes = await register({ name: "andrew1234", password: "test1234" })
+        const adminRes = await promoteAdmin(regRes.json().user.id, regRes.json().refreshToken)
+
+        expect(adminRes.statusCode).toBe(401)
+    })
 })
 
 beforeAll(async () => {
     await server.ready()
+    await generateAdminToken()
 })
 
 afterAll(async () => {
@@ -83,7 +108,7 @@ export async function login(payload: UserCreateType) {
     })
 }
 
-async function refresh(payload: RefreshType) {
+async function refresh(payload: RefreshTokenType) {
     return server.inject({
         method: 'POST',
         url: '/api/v1/auth/refresh',
@@ -91,11 +116,19 @@ async function refresh(payload: RefreshType) {
     })
 }
 
-async function logout(payload: RefreshType) {
+async function logout(payload: RefreshTokenType) {
     return server.inject({
         method: 'POST',
         url: '/api/v1/auth/logout',
         payload
+    })
+}
+
+async function promoteAdmin(userId: string, adminAccessToken: string) {
+    return server.inject({
+        method: 'POST',
+        url: '/api/v1/auth/promoteAdmin/' + userId,
+        headers: { authorization: `Bearer ${adminAccessToken}` }
     })
 }
 
