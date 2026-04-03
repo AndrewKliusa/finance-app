@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, afterEach, beforeEach } from
 import { buildServer } from '../server'
 import { UserCreateType, UserCreateSchema, UserEditType, GetUsersQuerySchema, GetUsersQueryType } from '../schemas/user.schema';
 import { prisma } from '../lib/prisma';
-import { createAdminUser, emptyUUID, testFunctionsBuilder } from './helpers';
+import { getAdminToken, emptyUUID, testFunctionsBuilder } from './helpers';
 import { redis } from '../lib/redis';
 import { register } from './auth.test';
 
@@ -58,6 +58,22 @@ describe("User routes", () => {
 
     it("Changes user name", async () => {
         const regRes = await register({ name: "andrw", password: "test1234" })
+        const patchRes = await patch(regRes.json().user.id, { name: "andrew"}, "", regRes.json().accessToken)
+
+        expect(patchRes.statusCode).toBe(200)
+        expect(patchRes.json().name).toBe("andrew")
+    })
+
+    it("Changes user name of a different user", async () => {
+        const regRes = await register({ name: "andrw", password: "test1234" })
+        const regResTwo = await register({ name: "andrew2", password: "test1234" })
+        const patchRes = await patch(regRes.json().user.id, { name: "andrew"}, "", regResTwo.json().accessToken)
+
+        expect(patchRes.statusCode).toBe(401)
+    })
+
+    it("Changes user name of a different user as admin", async () => {
+        const regRes = await register({ name: "andrw", password: "test1234" })
         const patchRes = await patch(regRes.json().user.id, { name: "andrew"})
 
         expect(patchRes.statusCode).toBe(200)
@@ -103,7 +119,7 @@ describe("User routes", () => {
 
 beforeAll(async () => {
     await server.ready()
-    accessToken = await createAdminUser()
+    accessToken = await getAdminToken()
 })
 
 afterAll(async () => {

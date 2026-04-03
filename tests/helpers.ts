@@ -5,13 +5,12 @@ import { generateTokenPair } from "../services/auth.service";
 
 export const emptyUUID = "00000000-0000-0000-0000-000000000000"
 
-export async function createAdminUser() {
-    const admin = await prisma.user.create({
-        data: { name: "admin", password: "test123" },
-        omit: { password: true }
+export async function getAdminToken() {
+    const admin = await prisma.user.findUnique({
+        where: { name: "admin" }
     })
 
-    const { accessToken } = await generateTokenPair(admin.id)
+    const { accessToken } = await generateTokenPair(admin!.id)
     return accessToken
 }
 
@@ -46,12 +45,13 @@ export function testFunctionsBuilder
             })
         },
 
-        async patch(identifier: string, payload: PATCH_TYPE, path?: string) {
+        async patch(identifier: string, payload: PATCH_TYPE, path?: string, token?: string) {
             return await server.inject({
                 method: 'PATCH',
                 url: `${url}/${identifier}` + (path ? `/${path}` : ""),
                 payload,
-                headers: { authorization: `Bearer ${getToken()}` }
+                headers: { authorization: token ? `Bearer ${token}` : `Bearer ${getToken()}` }
+
             })
         },
 

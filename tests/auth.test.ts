@@ -33,7 +33,7 @@ describe("Authentification", async () => {
         expect(loginResTwo.statusCode).toBe(401)
     })
 
-    it("Logs in with valid credentials", async () => {
+    it("Logins with valid credentials", async () => {
         await register({ name: "andrew1234", password: "test1234" })
         const loginRes = await login({ name: "andrew1234", password: "test1234" })
 

@@ -8,12 +8,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 model User {
   id        String   @id @default(uuid()) @db.Uuid
   password  String
   name      String   @unique
   createdAt DateTime @default(now())
   refreshTokens RefreshToken[]
+  role      Role     @default(USER)
 }
 
 model RefreshToken {

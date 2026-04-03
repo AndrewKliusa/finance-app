@@ -5,6 +5,7 @@ import { prisma } from "../lib/prisma"
 import argon2 from "argon2";
 import { redis } from "../lib/redis";
 import { authenticate } from "../plugins/authenticate";
+import { checkUser } from "../plugins/checkUser";
 
 export async function userRoutes(server: ZodServer) {
     server.get("/users", {
@@ -76,7 +77,7 @@ export async function userRoutes(server: ZodServer) {
                 404: z.object({ message: z.string() })
             }
         },
-        preHandler: [authenticate]
+        preHandler: [authenticate, checkUser]
     }, async (request, reply) => {
         const { id } = request.params
 
@@ -94,6 +95,8 @@ export async function userRoutes(server: ZodServer) {
         return reply.code(200).send(user)
     })
 
+
+
     server.delete("/users/:id",  {
         schema: {
             tags: ["Users"],
@@ -106,6 +109,15 @@ export async function userRoutes(server: ZodServer) {
         preHandler: [authenticate]
     }, async (request, reply) => {
         const { id } = request.params
+
+        const tokens = await prisma.refreshToken.findMany({
+            where: { userId: id }
+        })
+
+        await Promise.all(tokens.map(token => redis.del(`refreshToken:${token.token}`)))
+        await prisma.refreshToken.deleteMany({
+            where: { userId: id }
+        })
 
         const user = await prisma.user.delete({
             where: { id: id },

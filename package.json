@@ -6,11 +6,9 @@
   "scripts": {
     "dev": "dotenv -e .env -- npx tsx main.ts",
     "dev:push": "dotenv -e .env -- prisma db push",
-    "dev:migrate": "dotenv -e .env -- prisma migrate deploy",
     "dev:reset": "dotenv -e .env -- prisma migrate reset --force",
     "test:push": "dotenv -e .env.test -- prisma db push",
     "test:run": "dotenv -e .env.test -- vitest run",
-    "test:migrate": "dotenv -e .env.test -- prisma migrate deploy",
     "test": "npm run test:push && npm run test:run"
   },
   "keywords": [],
