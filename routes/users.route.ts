@@ -2,10 +2,10 @@ import { z } from "zod"
 import { GetUsersQuerySchema, UserCreateSchema, UserEditSchema, UserResponseSchema, UserSchema } from "../schemas/user.schema"
 import { ZodServer } from "../types/ZodServer"
 import { prisma } from "../lib/prisma"
-import argon2 from "argon2";
 import { redis } from "../lib/redis";
 import { authenticate } from "../plugins/authenticate";
 import { checkUser } from "../plugins/checkUser";
+import { adminOnly } from "../plugins/adminOnly";
 
 export async function userRoutes(server: ZodServer) {
     server.get("/users", {
@@ -106,7 +106,7 @@ export async function userRoutes(server: ZodServer) {
                 404: z.object({ message: z.string() })
             }
         },
-        preHandler: [authenticate]
+        preHandler: [authenticate, adminOnly]
     }, async (request, reply) => {
         const { id } = request.params
 

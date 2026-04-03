@@ -51,15 +51,14 @@ export function testFunctionsBuilder
                 url: `${url}/${identifier}` + (path ? `/${path}` : ""),
                 payload,
                 headers: { authorization: token ? `Bearer ${token}` : `Bearer ${getToken()}` }
-
             })
         },
 
-        async del(identifier: string, path?: string) {
+        async del(identifier: string, path?: string, token?: string) {
             return await server.inject({
                 method: 'DELETE',
                 url: `${url}/${identifier}` + (path ? `/${path}` : ""),
-                headers: { authorization: `Bearer ${getToken()}` }
+                headers: { authorization: token ? `Bearer ${token}` : `Bearer ${getToken()}` }
             })
         }
     }

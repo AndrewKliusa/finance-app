@@ -56,6 +56,13 @@ describe("User routes", () => {
         expect(res.statusCode).toBe(404)
     })
 
+    it("Deletes a non-existent user without admin perms", async () => {
+        const regRes = await register({ name: "andrew", password: "test1234" })
+        const delRes = await del(regRes.json().user.id, "", regRes.json().accessToken)
+
+        expect(delRes.statusCode).toBe(401)
+    })
+
     it("Changes user name", async () => {
         const regRes = await register({ name: "andrw", password: "test1234" })
         const patchRes = await patch(regRes.json().user.id, { name: "andrew"}, "", regRes.json().accessToken)
