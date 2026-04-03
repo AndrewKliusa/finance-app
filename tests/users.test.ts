@@ -4,7 +4,7 @@ import { UserCreateType, UserCreateSchema, UserEditType, GetUsersQuerySchema, Ge
 import { prisma } from '../lib/prisma';
 import { getAdminToken, emptyUUID, testFunctionsBuilder } from './helpers';
 import { redis } from '../lib/redis';
-import { register } from './auth.test';
+import { login, register } from './auth.test';
 
 const URL = "/api/v1/users"
 const server = buildServer()
@@ -54,6 +54,24 @@ describe("User routes", () => {
         const res = await del(emptyUUID)
 
         expect(res.statusCode).toBe(404)
+    })
+
+    it("Deletes a user and all their session keys", async () => {
+        const regRes = await register({ name: "andrew", password: "test1234" })
+        const loginRes = await login({ name: regRes.json().user.name, password: "test1234" })
+        const delRes = await del(regRes.json().user.id)
+
+        expect(delRes.statusCode).toBe(200)
+        expect(regRes.json().refreshToken).toBeTypeOf("string")
+        expect(regRes.json().accessToken).toBeTypeOf("string")
+        expect(regRes.json().refreshToken).not.toEqual(loginRes.json().refreshToken)
+        expect(regRes.json().accessToken).not.toEqual(loginRes.json().accessToken)
+
+        const firstToken = await redis.get(`refreshToken:${regRes.json().refreshToken}`)
+        const secondToken = await redis.get(`refreshToken:${loginRes.json().refreshToken}`)
+
+        expect(firstToken).toBeNull()
+        expect(secondToken).toBeNull()
     })
 
     it("Deletes a non-existent user without admin perms", async () => {

@@ -75,7 +75,7 @@ export async function register(payload: UserCreateType) {
     })
 }
 
-async function login(payload: UserCreateType) {
+export async function login(payload: UserCreateType) {
     return server.inject({
         method: 'POST',
         url: '/api/v1/auth/login',
