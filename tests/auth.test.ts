@@ -4,12 +4,13 @@ import { RefreshTokenType } from "../schemas/auth.schema";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "../lib/prisma";
 import { redis } from "../lib/redis";
-import { adminAccessToken, userFunctionsBuilder } from './helpers';
+import { adminAccessToken, authFunctionsBuilder, userFunctionsBuilder } from './helpers';
 import { generateAdminToken } from "./helpers";
 
 const server = buildServer()
 
-const { del } = userFunctionsBuilder(server, () => adminAccessToken)
+const { register, login, refresh, logout, promoteAdmin } = authFunctionsBuilder(server)
+const { del } = userFunctionsBuilder(server)
 
 describe("Authentification", async () => {
     it("Checks user auth keys upon creation", async () => {
@@ -91,46 +92,6 @@ afterEach(async () => {
     })
     await redis.flushdb()
 })
-
-export async function register(payload: UserCreateType) {
-    return server.inject({
-        method: 'POST',
-        url: '/api/v1/auth/register',
-        payload
-    })
-}
-
-export async function login(payload: UserCreateType) {
-    return server.inject({
-        method: 'POST',
-        url: '/api/v1/auth/login',
-        payload
-    })
-}
-
-async function refresh(payload: RefreshTokenType) {
-    return server.inject({
-        method: 'POST',
-        url: '/api/v1/auth/refresh',
-        payload
-    })
-}
-
-async function logout(payload: RefreshTokenType) {
-    return server.inject({
-        method: 'POST',
-        url: '/api/v1/auth/logout',
-        payload
-    })
-}
-
-async function promoteAdmin(userId: string, adminAccessToken: string) {
-    return server.inject({
-        method: 'POST',
-        url: '/api/v1/auth/promoteAdmin/' + userId,
-        headers: { authorization: `Bearer ${adminAccessToken}` }
-    })
-}
 
 // ADDITIONAL AI GENERATED TESTS
 // TESTS BELOW WERE NOT WRITTEN BY ME

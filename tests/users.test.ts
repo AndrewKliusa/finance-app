@@ -2,14 +2,13 @@ import { afterAll, beforeAll, describe, expect, it, afterEach, beforeEach } from
 import { buildServer } from '../server'
 import { UserCreateType, UserCreateSchema, UserEditType, GetUsersQuerySchema, GetUsersQueryType } from '../schemas/user.schema';
 import { prisma } from '../lib/prisma';
-import { generateAdminToken, emptyUUID, userFunctionsBuilder, adminAccessToken } from './helpers';
+import { generateAdminToken, emptyUUID, userFunctionsBuilder, adminAccessToken, authFunctionsBuilder } from './helpers';
 import { redis } from '../lib/redis';
-import { login, register } from './auth.test';
 
 const server = buildServer()
 
-const { get, del, patch, query } = userFunctionsBuilder<UserCreateType, UserEditType, GetUsersQueryType>(server, () => adminAccessToken)
-const noTokenUserFunctions = userFunctionsBuilder<UserCreateType, UserEditType, GetUsersQueryType>(server, () => "dummytoken")
+const { get, del, patch, query } = userFunctionsBuilder(server)
+const { register, login } = authFunctionsBuilder(server)
 
 describe("User routes", () => {
     it("Creates a user", async () => {
@@ -134,7 +133,7 @@ describe("User routes", () => {
 
     it("Gets a user using invalid token", async () => {
         const regRes = await register({ name: "andrew1234", password: "test1234" })
-        const getRes = await noTokenUserFunctions.get(regRes.json().user.id)
+        const getRes = await get(regRes.json().user.id, "", "dummytoken")
 
         expect(getRes.statusCode).toBe(401)
     })
