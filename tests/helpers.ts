@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import type { InjectPayload } from "light-my-request";
 import { prisma } from "../lib/prisma";
 import { generateTokenPair } from "../services/auth.service";
-import { GetUsersQueryType, UserCreateType, UserEditType } from "../schemas/user.schema";
+import { GetUsersQueryType, NameAndPasswordType, PasswordChangeType, UserEditType } from "../schemas/user.schema";
 import { RefreshTokenType } from "../schemas/auth.schema";
 
 export const emptyUUID = "00000000-0000-0000-0000-000000000000"
@@ -54,13 +54,22 @@ export function userFunctionsBuilder(server: FastifyInstance) {
                 url: `/api/v1/users/${identifier}` + (path ? `/${path}` : ""),
                 headers: { authorization: token ? `Bearer ${token}` : `Bearer ${adminAccessToken}` }
             })
+        },
+
+        async changePassword(identifier: string, oldPassword: string, newPassword: string, token?: string) {
+            return await server.inject({
+                method: 'PATCH',
+                body: { oldPassword, newPassword } as PasswordChangeType,
+                url: `/api/v1/users/${identifier}/password`,
+                headers: { authorization: token ? `Bearer ${token}` : `Bearer ${adminAccessToken}` }
+            })
         }
     }
 }
 
 export function authFunctionsBuilder(server: FastifyInstance) {
     return {
-       async register(payload: UserCreateType) {
+       async register(payload: NameAndPasswordType) {
             return server.inject({
                 method: 'POST',
                 url: '/api/v1/auth/register',
@@ -68,7 +77,7 @@ export function authFunctionsBuilder(server: FastifyInstance) {
             })
         },
 
-        async login(payload: UserCreateType) {
+        async login(payload: NameAndPasswordType) {
             return server.inject({
                 method: 'POST',
                 url: '/api/v1/auth/login',

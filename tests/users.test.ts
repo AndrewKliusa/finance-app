@@ -1,13 +1,14 @@
 import { afterAll, beforeAll, describe, expect, it, afterEach, beforeEach } from 'vitest'
 import { buildServer } from '../server'
-import { UserCreateType, UserCreateSchema, UserEditType, GetUsersQuerySchema, GetUsersQueryType } from '../schemas/user.schema';
+import { NameAndPasswordType, NameAndPasswordSchema, UserEditType, GetUsersQuerySchema, GetUsersQueryType } from '../schemas/user.schema';
 import { prisma } from '../lib/prisma';
 import { generateAdminToken, emptyUUID, userFunctionsBuilder, adminAccessToken, authFunctionsBuilder } from './helpers';
 import { redis } from '../lib/redis';
+import argon2 from "argon2"
 
 const server = buildServer()
 
-const { get, del, patch, query } = userFunctionsBuilder(server)
+const { get, del, patch, query, changePassword } = userFunctionsBuilder(server)
 const { register, login } = authFunctionsBuilder(server)
 
 describe("User routes", () => {
@@ -137,6 +138,36 @@ describe("User routes", () => {
 
         expect(getRes.statusCode).toBe(401)
     })
+
+    it("Changes user password", async () => {
+        const regRes = await register({ name: "andrew1234", password: "test1234" })
+        const user = await prisma.user.findUnique({
+            where: { name: regRes.json().user.name }
+        })
+
+        const passChangeRes = await changePassword(regRes.json().user.id, "test1234", "newTest1234")
+        const updatedUser = await prisma.user.findUnique({
+            where: { name: regRes.json().user.name }
+        })
+        expect(passChangeRes.statusCode).toBe(204)
+        
+        expect(user?.password).not.toEqual(updatedUser?.password)
+    })
+
+    it("Changes user password with a wrong old password", async () => {
+        const regRes = await register({ name: "andrew1234", password: "test1234" })
+        const user = await prisma.user.findUnique({
+            where: { name: regRes.json().user.name }
+        })
+
+        const passChangeRes = await changePassword(regRes.json().user.id, "test", "newTest1234")
+        const updatedUser = await prisma.user.findUnique({
+            where: { name: regRes.json().user.name }
+        })
+        expect(passChangeRes.statusCode).toBe(400)
+        
+        expect(user?.password).toEqual(updatedUser?.password)
+    })
 })
 
 beforeAll(async () => {
@@ -246,5 +277,56 @@ describe("(AI) User routes", async () => {
 
         expect(res.statusCode).toBe(404)
         expect(body).toHaveProperty("message")
+    })
+
+    it("(AI) User can change their own password", async () => {
+        const regRes = await register({ name: "andrew1234", password: "test1234" })
+        const res = await changePassword(regRes.json().user.id, "test1234", "newTest1234", regRes.json().accessToken)
+
+        expect(res.statusCode).toBe(204)
+    })
+
+    it("(AI) Can login with new password after change", async () => {
+        const regRes = await register({ name: "andrew1234", password: "test1234" })
+        await changePassword(regRes.json().user.id, "test1234", "newTest1234", regRes.json().accessToken)
+
+        const loginRes = await login({ name: "andrew1234", password: "newTest1234" })
+        expect(loginRes.statusCode).toBe(200)
+    })
+
+    it("(AI) Cannot login with old password after change", async () => {
+        const regRes = await register({ name: "andrew1234", password: "test1234" })
+        await changePassword(regRes.json().user.id, "test1234", "newTest1234", regRes.json().accessToken)
+
+        const loginRes = await login({ name: "andrew1234", password: "test1234" })
+        expect(loginRes.statusCode).toBe(401)
+    })
+
+    it("(AI) Cannot change another user's password", async () => {
+        const regRes = await register({ name: "andrew1234", password: "test1234" })
+        const regResTwo = await register({ name: "andrew2", password: "test1234" })
+
+        const res = await changePassword(regRes.json().user.id, "test1234", "newTest1234", regResTwo.json().accessToken)
+        expect(res.statusCode).toBe(401)
+    })
+
+    it("(AI) Admin can change another user's password", async () => {
+        const regRes = await register({ name: "andrew1234", password: "test1234" })
+        const res = await changePassword(regRes.json().user.id, "test1234", "newTest1234")
+
+        expect(res.statusCode).toBe(204)
+    })
+
+    it("(AI) Rejects new password that is too short", async () => {
+        const regRes = await register({ name: "andrew1234", password: "test1234" })
+        const res = await changePassword(regRes.json().user.id, "test1234", "short", regRes.json().accessToken)
+
+        expect(res.statusCode).toBe(400)
+    })
+
+    it("(AI) Rejects password change for non-existent user", async () => {
+        const res = await changePassword(emptyUUID, "test1234", "newTest1234")
+
+        expect(res.statusCode).toBe(404)
     })
 })

@@ -1,5 +1,5 @@
 import { buildServer } from "../server"
-import { GetUsersQueryType, UserCreateType, UserEditType } from '../schemas/user.schema';
+import { GetUsersQueryType, NameAndPasswordType, UserEditType } from '../schemas/user.schema';
 import { RefreshTokenType } from "../schemas/auth.schema";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "../lib/prisma";
@@ -53,18 +53,22 @@ describe("Authentification", async () => {
         const regRes = await register({ name: "andrew1234", password: "test1234" })
         const regResTwo = await register({ name: "andrew2", password: "test1234" })
 
-        const delRes = await del(regResTwo.json().user.id, "", regRes.json().refreshToken)
+        const delRes = await del(regResTwo.json().user.id, "", regRes.json().accessToken)
         expect(delRes.statusCode).toBe(401)
 
         const adminRes = await promoteAdmin(regRes.json().user.id, adminAccessToken)
-        await del(regResTwo.json().user.id, "", adminRes.json().refreshToken)
+        expect(adminRes.statusCode).toBe(200)
 
-        expect(adminRes.statusCode).toBe(201)
+        const loginRes = await login({ name: "andrew1234", password: "test1234" })
+        expect(loginRes.statusCode).toBe(200)
+
+        const delResTwo = await del(regResTwo.json().user.id, "", loginRes.json().accessToken)
+        expect(delResTwo.statusCode).toBe(200)
     })
 
     it("Promotes a user to admin without admin permissions", async () => {
         const regRes = await register({ name: "andrew1234", password: "test1234" })
-        const adminRes = await promoteAdmin(regRes.json().user.id, regRes.json().refreshToken)
+        const adminRes = await promoteAdmin(regRes.json().user.id, regRes.json().accessToken)
 
         expect(adminRes.statusCode).toBe(401)
     })
@@ -142,5 +146,35 @@ describe("(AI) User routes", async () => {
         const refreshRes = await refresh({ refreshToken })
 
         expect(refreshRes.statusCode).toBe(401)
+    })
+
+    it("(AI) Promotes a non-existent user", async () => {
+        const res = await promoteAdmin("00000000-0000-0000-0000-000000000000", adminAccessToken)
+
+        expect(res.statusCode).toBe(404)
+    })
+
+    it("(AI) Rejects promotion with invalid UUID", async () => {
+        const res = await promoteAdmin("not-a-uuid", adminAccessToken)
+
+        expect(res.statusCode).toBe(400)
+    })
+
+    it("(AI) Invalidates user sessions after promotion", async () => {
+        const regRes = await register({ name: "andrew1234", password: "test1234" })
+        const { refreshToken } = regRes.json()
+
+        await promoteAdmin(regRes.json().user.id, adminAccessToken)
+
+        const refreshRes = await refresh({ refreshToken })
+        expect(refreshRes.statusCode).toBe(401)
+    })
+
+    it("(AI) Promoting an already-admin user still succeeds", async () => {
+        const regRes = await register({ name: "andrew1234", password: "test1234" })
+        await promoteAdmin(regRes.json().user.id, adminAccessToken)
+
+        const secondPromote = await promoteAdmin(regRes.json().user.id, adminAccessToken)
+        expect(secondPromote.statusCode).toBe(200)
     })
 })

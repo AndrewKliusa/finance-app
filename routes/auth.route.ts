@@ -1,18 +1,19 @@
 import z from "zod";
 import { prisma } from "../lib/prisma";
 import { AccessAndRefreshTokenSchema, AuthResponseSchema, RefreshTokenSchema } from "../schemas/auth.schema";
-import { UserCreateSchema, UserResponseSchema } from "../schemas/user.schema";
+import { NameAndPasswordSchema, UserResponseSchema } from "../schemas/user.schema";
 import { generateTokenPair, revokeRefreshToken, rotateRefreshToken } from "../services/auth.service";
 import { ZodServer } from "../types/ZodServer";
 import argon2 from 'argon2'
 import { adminOnly } from "../plugins/adminOnly";
 import { authenticate } from "../plugins/authenticate";
+import { redis } from "../lib/redis";
 
 export async function authRoutes(server: ZodServer) {
     server.post("/auth/register", {
         schema: {
             tags: ["Auth"],
-            body: UserCreateSchema,
+            body: NameAndPasswordSchema,
             response: {
                 201: AuthResponseSchema
             }
@@ -33,7 +34,7 @@ export async function authRoutes(server: ZodServer) {
     server.post("/auth/login", {
         schema: {
             tags: ["Auth"],
-            body: UserCreateSchema,
+            body: NameAndPasswordSchema,
             response: {
                 200: AuthResponseSchema,
                 401: z.object({ message: z.string()})
@@ -107,19 +108,31 @@ export async function authRoutes(server: ZodServer) {
             tags: ["Auth"],
             params: z.object({ id: z.uuid() }),
             response: {
-                201: AuthResponseSchema
+                200: UserResponseSchema
             }
         },
         preHandler: [authenticate, adminOnly]
     }, async (request, reply) => {   
         const { id } =  request.params
         
-        const admin = await prisma.user.update({
-            where: { id },
-            data: { role: "ADMIN" }
+        const tokens = await prisma.refreshToken.findMany({
+            where: { userId: id }
         })
         
-        const tokens = await generateTokenPair(admin.id)
-        return reply.code(201).send({ ...tokens, user: admin })
+        await prisma.refreshToken.deleteMany({
+            where: { userId: id }                                                                           
+        })
+        await Promise.all(tokens.map(token => redis.del(`refreshToken:${token.token}`)))
+
+        const admin = await prisma.user.update({
+            where: { id },
+            data: { role: "ADMIN" },
+            omit: { password: true }
+        })
+
+        const keys = await redis.keys('users:page:*')
+        if (keys.length) await redis.del(...keys)
+
+        return reply.code(200).send(admin)
     })
 }
