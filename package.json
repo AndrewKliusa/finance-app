@@ -2,40 +2,37 @@
   "name": "petproject",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "main.ts",
   "scripts": {
     "dev": "dotenv -e .env -- npx tsx main.ts",
-    "dev:migrate": "dotenv -e .env -- prisma migrate deploy",
+    "dev:push": "dotenv -e .env -- prisma db push",
     "dev:reset": "dotenv -e .env -- prisma migrate reset --force",
-    "test:migrate": "dotenv -e .env.test -- prisma migrate deploy",
+    "test:push": "dotenv -e .env.test -- prisma db push",
     "test:run": "dotenv -e .env.test -- vitest run",
-    "test": "npm run test:migrate && npm run test:run"
+    "test": "npm run test:push && npm run test:run"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@fastify/rate-limit": "^10.3.0",
     "@fastify/swagger": "^9.7.0",
     "@fastify/swagger-ui": "^5.2.5",
     "@prisma/client": "^6.19.2",
-    "@types/argon2": "^0.14.1",
-    "@types/dotenv": "^6.1.1",
-    "@types/node": "^25.5.0",
     "argon2": "^0.44.0",
     "dotenv": "^17.3.1",
     "fastify": "^5.8.4",
     "fastify-type-provider-zod": "^6.1.0",
     "ioredis": "^5.10.1",
+    "jose": "^6.2.2",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/node": "^25.5.0",
     "@types/supertest": "^7.2.0",
-    "@usebruno/cli": "^3.2.0",
-    "concurrently": "^9.2.1",
     "dotenv-cli": "^11.0.0",
     "prisma": "^6.19.2",
-    "vitest": "^4.1.2",
-    "wait-on": "^9.0.4"
+    "vitest": "^4.1.2"
   }
 }

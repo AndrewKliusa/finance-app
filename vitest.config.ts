@@ -9,6 +9,12 @@ export default defineConfig({
         globals: true,
         include: [
             'tests/*.test.ts'
-        ]
+        ],
+        server: {
+            deps: {
+                inline: [/generated\/prisma/]
+            }
+        },
+        fileParallelism: false
     }
 })

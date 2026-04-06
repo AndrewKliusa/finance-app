@@ -2,11 +2,16 @@ import Fastify from 'fastify'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
 import { serializerCompiler, validatorCompiler, ZodTypeProvider } from 'fastify-type-provider-zod'
-import { userRoutes } from './routes/users'
-import { errorHandler } from './errorHandler'
+import { userRoutes } from './routes/users.route'
+import { errorHandler } from './handlers/errorHandler'
+import { authRoutes } from './routes/auth.route'
+import { seed } from './prisma/seed'
+import rateLimit from '@fastify/rate-limit'
+import { prisma } from './lib/prisma'
+import { redis } from './lib/redis'
 
 export function buildServer() {
-    const server = Fastify().withTypeProvider<ZodTypeProvider>()
+    const server = Fastify({ logger: false }).withTypeProvider<ZodTypeProvider>()
 
     server.setValidatorCompiler(validatorCompiler)
     server.setSerializerCompiler(serializerCompiler)
@@ -22,9 +27,23 @@ export function buildServer() {
     })
 
     server.register(swaggerUi, {
-        routePrefix: '/docs'
+        routePrefix: '/api/v1/docs'
     })
 
     server.register(userRoutes, { prefix: '/api/v1' })
+    server.register(authRoutes, { prefix: '/api/v1' })
+
+    server.register(rateLimit, {
+        global: true,
+        max: 100,
+        timeWindow: '1 minute'
+    })
+    server.register(async () => { await seed() })
+
+    server.addHook('onClose', async () => {
+        await prisma.$disconnect()
+        await redis.quit()
+    })
+
     return server
 }
