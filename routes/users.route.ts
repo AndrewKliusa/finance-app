@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { GetUsersQuerySchema, NameAndPasswordSchema, PasswordChangeSchema, UserEditSchema, UserResponseSchema, UserSchema } from "../schemas/user.schema"
+import { GetUsersQuerySchema, NameAndPasswordSchema, PasswordChangeSchema, UserEditSchema, UserQueryResponseSchema, UserResponseSchema, UserSchema } from "../schemas/user.schema"
 import { ZodServer } from "../types/ZodServer"
 import { prisma } from "../lib/prisma"
 import { redis } from "../lib/redis";
@@ -7,6 +7,7 @@ import { authenticate } from "../plugins/authenticate";
 import { checkUser } from "../plugins/checkUser";
 import { adminOnly } from "../plugins/adminOnly";
 import argon2 from "argon2"
+import { invalidateUserPages, revokeUserTokens } from "../handlers/users";
 
 export async function userRoutes(server: ZodServer) {
     server.get("/users", {
@@ -14,7 +15,7 @@ export async function userRoutes(server: ZodServer) {
             tags: ["Users"],
             querystring: GetUsersQuerySchema,
             response: {
-                200: z.array(UserResponseSchema)
+                200: UserQueryResponseSchema
             }
         },
         preHandler: [authenticate]
@@ -29,12 +30,13 @@ export async function userRoutes(server: ZodServer) {
 
         const users = await prisma.user.findMany({
             take: limit,
-            skip: (page - 1) * limit
+            skip: (page - 1) * limit,
+            omit: { password: true }
         })
 
         await redis.set(cacheKey, JSON.stringify(users), "EX", 60)
 
-        return reply.code(200).send(users)
+        return reply.code(200).send({ data: users, total: users.length, page, limit })
     })
 
     server.get("/users/:id", {
@@ -89,9 +91,7 @@ export async function userRoutes(server: ZodServer) {
         })
 
         await redis.set(`user:${id}`, JSON.stringify(user), "EX", 60)
-
-        const keys = await redis.keys('users:page:*')
-        if (keys.length) await redis.del(...keys)
+        await invalidateUserPages()
 
         return reply.code(200).send(user)
     })
@@ -132,9 +132,7 @@ export async function userRoutes(server: ZodServer) {
         })
 
         await redis.set(`user:${id}`, JSON.stringify(updatedUser), "EX", 60)
-
-        const keys = await redis.keys('users:page:*')
-        if (keys.length) await redis.del(...keys)
+        await invalidateUserPages()
 
         return reply.code(204).send()
     })
@@ -144,7 +142,7 @@ export async function userRoutes(server: ZodServer) {
             tags: ["Users"],
             params: z.object({ id: z.uuid() }),
             response: {
-                200: UserResponseSchema,
+                204: z.void(),
                 404: z.object({ message: z.string() })
             }
         },
@@ -152,25 +150,14 @@ export async function userRoutes(server: ZodServer) {
     }, async (request, reply) => {
         const { id } = request.params
 
-        const tokens = await prisma.refreshToken.findMany({
-            where: { userId: id }
-        })
-
-        await Promise.all(tokens.map(token => redis.del(`refreshToken:${token.token}`)))
-        await prisma.refreshToken.deleteMany({
-            where: { userId: id }
-        })
-
-        const user = await prisma.user.delete({
+        await revokeUserTokens(id)
+        await prisma.user.delete({
             where: { id: id },
             omit: { password: true },
         })
 
         await redis.del(`user:${id}`)
 
-        const keys = await redis.keys('users:page:*')
-        if (keys.length) await redis.del(...keys)
-
-        return reply.code(200).send(user);
+        return reply.code(204).send();
     })
 }

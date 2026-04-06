@@ -9,6 +9,6 @@ export async function checkUser(request: FastifyRequest<{ Params: { id: string }
     })
 
     if (request.user.id !== id && !isAdmin) {
-        return await reply.code(401).send({ message: "You don't have permissions to edit this user!" })
+        return await reply.code(403).send({ message: "You don't have permissions to edit this user!" })
     }
 }

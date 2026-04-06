@@ -38,8 +38,7 @@ describe("User routes", () => {
         const regRes = await register({ name: "andrew", password: "test1234" })
         const delRes = await del(regRes.json().user.id)
 
-        expect(delRes.statusCode).toBe(200)
-        expect(delRes.json()).toEqual(regRes.json().user)
+        expect(delRes.statusCode).toBe(204)
     })
 
     it("Gets a non-existent user", async () => {
@@ -59,7 +58,7 @@ describe("User routes", () => {
         const loginRes = await login({ name: regRes.json().user.name, password: "test1234" })
         const delRes = await del(regRes.json().user.id)
 
-        expect(delRes.statusCode).toBe(200)
+        expect(delRes.statusCode).toBe(204)
         expect(regRes.json().refreshToken).toBeTypeOf("string")
         expect(regRes.json().accessToken).toBeTypeOf("string")
         expect(regRes.json().refreshToken).not.toEqual(loginRes.json().refreshToken)
@@ -76,7 +75,7 @@ describe("User routes", () => {
         const regRes = await register({ name: "andrew", password: "test1234" })
         const delRes = await del(regRes.json().user.id, "", regRes.json().accessToken)
 
-        expect(delRes.statusCode).toBe(401)
+        expect(delRes.statusCode).toBe(403)
     })
 
     it("Changes user name", async () => {
@@ -92,7 +91,7 @@ describe("User routes", () => {
         const regResTwo = await register({ name: "andrew2", password: "test1234" })
         const patchRes = await patch(regRes.json().user.id, { name: "andrew"}, "", regResTwo.json().accessToken)
 
-        expect(patchRes.statusCode).toBe(401)
+        expect(patchRes.statusCode).toBe(403)
     })
 
     it("Changes user name of a different user as admin", async () => {
@@ -108,7 +107,7 @@ describe("User routes", () => {
         await register({ name: "andrew2", password: "test1234" })
         const getRes = await query({ page: 1, limit: 10 })
 
-        expect(getRes.json()).length(3)
+        expect(getRes.json().data).length(3)
     })
 
     it("Gets user from cache", async () => {
@@ -187,17 +186,10 @@ beforeEach(async () => {
     await redis.flushdb()
 })
 
-afterEach(async () => {
-    await prisma.user.deleteMany({
-        where: { name: { not: 'admin' } }
-    })
-    await redis.flushdb()
-})
-
 // ADDITIONAL AI GENERATED TESTS
 // TESTS BELOW WERE NOT WRITTEN BY ME
 
-describe("(AI) User routes", async () => {
+describe("(AI) User routes", () => {
     it("(AI) Does not expose password in register response", async () => {
         const res = await register({ name: "andrew", password: "test1234" })
 
@@ -307,7 +299,7 @@ describe("(AI) User routes", async () => {
         const regResTwo = await register({ name: "andrew2", password: "test1234" })
 
         const res = await changePassword(regRes.json().user.id, "test1234", "newTest1234", regResTwo.json().accessToken)
-        expect(res.statusCode).toBe(401)
+        expect(res.statusCode).toBe(403)
     })
 
     it("(AI) Admin can change another user's password", async () => {

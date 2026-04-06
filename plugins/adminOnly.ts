@@ -7,6 +7,6 @@ export async function adminOnly(request: FastifyRequest, reply: FastifyReply) {
     })
 
     if (!isAdmin) {
-        return await reply.code(401).send({ message: "You need admin persmissions for this operation!" })
+        return await reply.code(403).send({ message: "You need admin persmissions for this operation!" })
     }
 }

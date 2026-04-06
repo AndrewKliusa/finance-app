@@ -8,6 +8,8 @@ import argon2 from 'argon2'
 import { adminOnly } from "../plugins/adminOnly";
 import { authenticate } from "../plugins/authenticate";
 import { redis } from "../lib/redis";
+import rateLimit from "@fastify/rate-limit";
+import { revokeUserTokens } from "../handlers/users";
 
 export async function authRoutes(server: ZodServer) {
     server.post("/auth/register", {
@@ -69,7 +71,7 @@ export async function authRoutes(server: ZodServer) {
             body: RefreshTokenSchema,
             response: {
                 200: AccessAndRefreshTokenSchema,
-                401: z.object({ message: z.string()})
+                401: z.object({ message: z.string()}),
             }
         }
     }, async (request, reply) => {
@@ -103,7 +105,7 @@ export async function authRoutes(server: ZodServer) {
         }
     })
 
-    server.post("/auth/promoteAdmin/:id", {
+    server.post("/auth/promote-admin/:id", {
         schema: {
             tags: ["Auth"],
             params: z.object({ id: z.uuid() }),
@@ -115,24 +117,13 @@ export async function authRoutes(server: ZodServer) {
     }, async (request, reply) => {   
         const { id } =  request.params
         
-        const tokens = await prisma.refreshToken.findMany({
-            where: { userId: id }
-        })
-        
-        await prisma.refreshToken.deleteMany({
-            where: { userId: id }                                                                           
-        })
-        await Promise.all(tokens.map(token => redis.del(`refreshToken:${token.token}`)))
-
         const admin = await prisma.user.update({
             where: { id },
             data: { role: "ADMIN" },
             omit: { password: true }
         })
-
-        const keys = await redis.keys('users:page:*')
-        if (keys.length) await redis.del(...keys)
-
+        
+        await revokeUserTokens(id)
         return reply.code(200).send(admin)
     })
 }

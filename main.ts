@@ -10,3 +10,12 @@ server.listen({ port: 3000 }, (error) => {
         server.log.error(error)
     }
 })
+
+async function shutdown() {
+    console.log("Shutting down...")
+    await server.close()
+    process.exit(0)
+}
+
+process.on('SIGINT', shutdown)
+process.on('SIGTERM', shutdown)

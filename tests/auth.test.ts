@@ -12,7 +12,7 @@ const server = buildServer()
 const { register, login, refresh, logout, promoteAdmin } = authFunctionsBuilder(server)
 const { del } = userFunctionsBuilder(server)
 
-describe("Authentification", async () => {
+describe("Authentification", () => {
     it("Checks user auth keys upon creation", async () => {
         const regRes = await register({ name: "andrew1234", password: "test1234" })
 
@@ -54,7 +54,7 @@ describe("Authentification", async () => {
         const regResTwo = await register({ name: "andrew2", password: "test1234" })
 
         const delRes = await del(regResTwo.json().user.id, "", regRes.json().accessToken)
-        expect(delRes.statusCode).toBe(401)
+        expect(delRes.statusCode).toBe(403)
 
         const adminRes = await promoteAdmin(regRes.json().user.id, adminAccessToken)
         expect(adminRes.statusCode).toBe(200)
@@ -63,14 +63,14 @@ describe("Authentification", async () => {
         expect(loginRes.statusCode).toBe(200)
 
         const delResTwo = await del(regResTwo.json().user.id, "", loginRes.json().accessToken)
-        expect(delResTwo.statusCode).toBe(200)
+        expect(delResTwo.statusCode).toBe(204)
     })
 
     it("Promotes a user to admin without admin permissions", async () => {
         const regRes = await register({ name: "andrew1234", password: "test1234" })
         const adminRes = await promoteAdmin(regRes.json().user.id, regRes.json().accessToken)
 
-        expect(adminRes.statusCode).toBe(401)
+        expect(adminRes.statusCode).toBe(403)
     })
 })
 
@@ -90,17 +90,10 @@ beforeEach(async () => {
     await redis.flushdb()
 })
 
-afterEach(async () => {
-    await prisma.user.deleteMany({
-        where: { name: { not: 'admin' } }
-    })
-    await redis.flushdb()
-})
-
 // ADDITIONAL AI GENERATED TESTS
 // TESTS BELOW WERE NOT WRITTEN BY ME
 
-describe("(AI) User routes", async () => {
+describe("(AI) User routes", () => {
     it("(AI) Refreshes a token pair", async () => {
         const regRes = await register({ name: "andrew1234", password: "test1234" })
         const { refreshToken } = regRes.json()

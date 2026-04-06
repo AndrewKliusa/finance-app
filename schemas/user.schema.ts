@@ -18,9 +18,17 @@ export const PasswordChangeSchema = z.object({
     newPassword: z.string().trim().min(8).max(255),
 })
 
+
 export const NameAndPasswordSchema = UserSchema.pick({ name: true, password: true })
 export const UserResponseSchema = UserSchema.omit({ password: true })
 export const UserEditSchema = UserSchema.pick({ name: true })
+
+export const UserQueryResponseSchema = z.object({
+    data: z.array(UserResponseSchema),
+    total: z.number(),
+    page: z.number(),
+    limit: z.number()
+})
 
 export type UserType = z.infer<typeof UserSchema>
 export type UserResponseType = z.infer<typeof UserResponseSchema>

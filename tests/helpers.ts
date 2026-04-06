@@ -104,7 +104,7 @@ export function authFunctionsBuilder(server: FastifyInstance) {
         async promoteAdmin(userId: string, adminAccessToken: string) {
             return server.inject({
                 method: 'POST',
-                url: '/api/v1/auth/promoteAdmin/' + userId,
+                url: '/api/v1/auth/promote-admin/' + userId,
                 headers: { authorization: `Bearer ${adminAccessToken}` }
             })
         }

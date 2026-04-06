@@ -6,6 +6,7 @@ const accessSecret = new TextEncoder().encode(process.env.JWT_ACCESS_SECRET)
 const refreshSecret = new TextEncoder().encode(process.env.JWT_REFRESH_SECRET)
 
 const ACCESS_TOKEN_TTL = '15m'
+const REFRESH_TOKEN_JWT_EXP = '30d'
 const REFRESH_TOKEN_TTL = 60 * 60 * 24 * 30
 
 export async function generateTokenPair(userId: string) {
@@ -18,7 +19,7 @@ export async function generateTokenPair(userId: string) {
 
     const refreshToken = await new SignJWT({ sub: userId })
         .setProtectedHeader({ alg: 'HS256' })
-        .setExpirationTime(REFRESH_TOKEN_TTL)
+        .setExpirationTime(REFRESH_TOKEN_JWT_EXP)
         .setJti(crypto.randomUUID())
         .setIssuedAt()
         .sign(refreshSecret)
@@ -36,17 +37,23 @@ export async function generateTokenPair(userId: string) {
 
 export async function rotateRefreshToken(oldToken: string) {
     const userId = await redis.get(`refreshToken:${oldToken}`)
-
     if (!userId) {
-        throw new Error('Invalid refresh token!')
+        throw new Error("Invalid refresh token!")
     }
+
+    const { payload } = await jwtVerify(oldToken, refreshSecret)
+    if (payload.sub != userId) {
+        throw new Error("This token does not belong to this account!")
+    }
+
+    const newTokens = await generateTokenPair(userId)
 
     await prisma.refreshToken.delete({
         where: { token: oldToken }
     })
     await redis.del(`refreshToken:${oldToken}`)
 
-    return generateTokenPair(userId)
+    return newTokens
 }
 
 export async function revokeRefreshToken(token: string) {
