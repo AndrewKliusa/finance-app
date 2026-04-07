@@ -6,5 +6,10 @@ export const CategorySchema = z.object({
     name: z.string().trim().max(32),
     color: z.string().regex(/^#(?:[0-9a-fA-F]{3}){1,2}$/),
     budget: z.number().int().positive(),
-    user: UserSchema
+    userId: z.uuid()
 })
+
+export const CategoryCreateSchema = CategorySchema.pick({ name: true, color: true, budget: true })
+export const CategoryResponseSchema = CategorySchema.omit({ userId: true })
+
+export type CategorySchemaType = z.infer<typeof CategorySchema>

@@ -1,6 +1,6 @@
 import { SignJWT, jwtVerify } from 'jose'
 import { prisma } from '../lib/prisma'
-import { redis } from '../lib/redis'
+import { redis } from '../lib/redis/redis'
 
 const accessSecret = new TextEncoder().encode(process.env.JWT_ACCESS_SECRET)
 const refreshSecret = new TextEncoder().encode(process.env.JWT_REFRESH_SECRET)

@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma"
-import { redis } from "../lib/redis"
+import { redis } from "../lib/redis/redis"
 
 export async function invalidateUserPages() {
     const keys = await redis.keys('users:page:*')

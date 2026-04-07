@@ -2,7 +2,7 @@ import { z } from "zod"
 import { GetUsersQuerySchema, NameAndPasswordSchema, PasswordChangeSchema, UserEditSchema, UserQueryResponseSchema, UserResponseSchema, UserSchema } from "../schemas/user.schema"
 import { ZodServer } from "../types/ZodServer"
 import { prisma } from "../lib/prisma"
-import { redis } from "../lib/redis";
+import { redis } from "../lib/redis/redis";
 import { authenticate } from "../plugins/authenticate";
 import { checkUser } from "../plugins/checkUser";
 import { adminOnly } from "../plugins/adminOnly";

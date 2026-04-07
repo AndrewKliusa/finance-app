@@ -3,7 +3,7 @@ import { buildServer } from '../server'
 import { NameAndPasswordType, NameAndPasswordSchema, UserEditType, GetUsersQuerySchema, GetUsersQueryType } from '../schemas/user.schema';
 import { prisma } from '../lib/prisma';
 import { generateAdminToken, emptyUUID, userFunctionsBuilder, adminAccessToken, authFunctionsBuilder } from './helpers';
-import { redis } from '../lib/redis';
+import { redis } from '../lib/redis/redis';
 import argon2 from "argon2"
 
 const server = buildServer()

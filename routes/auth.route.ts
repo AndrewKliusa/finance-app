@@ -7,8 +7,6 @@ import { ZodServer } from "../types/ZodServer";
 import argon2 from 'argon2'
 import { adminOnly } from "../plugins/adminOnly";
 import { authenticate } from "../plugins/authenticate";
-import { redis } from "../lib/redis";
-import rateLimit from "@fastify/rate-limit";
 import { revokeUserTokens } from "../handlers/users";
 
 export async function authRoutes(server: ZodServer) {

@@ -8,7 +8,7 @@ import { authRoutes } from './routes/auth.route'
 import { seed } from './prisma/seed'
 import rateLimit from '@fastify/rate-limit'
 import { prisma } from './lib/prisma'
-import { redis } from './lib/redis'
+import { redis } from './lib/redis/redis'
 
 export function buildServer() {
     const server = Fastify({ logger: false }).withTypeProvider<ZodTypeProvider>()
