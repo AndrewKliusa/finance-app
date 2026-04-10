@@ -1,12 +1,11 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { prisma } from "../lib/prisma";
+import { isAdmin } from "../utils/users";
 
 export async function adminOnly(request: FastifyRequest, reply: FastifyReply) {
-    const isAdmin = await prisma.user.findFirst({
-        where: { id: request.user.id, role: "ADMIN" }
-    })
+    const hasAdminPerms = await isAdmin(request.user.id)
 
-    if (!isAdmin) {
+    if (!hasAdminPerms) {
         return await reply.code(403).send({ message: "You need admin persmissions for this operation!" })
     }
 }

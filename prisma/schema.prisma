@@ -49,12 +49,14 @@ model Tag {
 
 model Category {
   id        String  @id @default(uuid()) @db.Uuid
-  name      String  @unique
+  name      String
   color     String
   budget    Int
   userId    String  @db.Uuid
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
+
+  @@unique([userId, name])
 }
 
 model Transaction {

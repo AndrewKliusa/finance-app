@@ -12,4 +12,8 @@ export const CategorySchema = z.object({
 export const CategoryCreateSchema = CategorySchema.pick({ name: true, color: true, budget: true })
 export const CategoryResponseSchema = CategorySchema.omit({ userId: true })
 
+export const CategoryFromRedisSchema = CategorySchema.extend({
+    budget: z.coerce.number(),
+});
+
 export type CategorySchemaType = z.infer<typeof CategorySchema>

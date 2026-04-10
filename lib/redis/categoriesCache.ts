@@ -1,15 +1,5 @@
-import { CategorySchemaType } from "../../schemas/category.schema";
+import { CategoryFromRedisSchema, CategorySchemaType } from "../../schemas/category.schema";
 import { redis } from "./redis";
-
-async function writeCategoryHash(category: CategorySchemaType) {
-    await redis.hset(`category:${category.id}`, {
-        id: category.id,
-        name: category.name,
-        color: category.color,
-        budget: category.budget,
-        userId: category.userId
-    })
-}
 
 export async function cacheCategory(category: CategorySchemaType) {
     await writeCategoryHash(category)
@@ -17,7 +7,8 @@ export async function cacheCategory(category: CategorySchemaType) {
 }
 
 export async function getCachedCategory(categoryId: string) {
-    return await redis.hgetall(`category:${categoryId}`)
+    const categoryObject = await redis.hgetall(`category:${categoryId}`)
+    return CategoryFromRedisSchema.parse(categoryObject)
 }
 
 export async function getCachedCategoriesForUser(userId: string) {
@@ -33,4 +24,14 @@ export async function getCachedCategoriesForUser(userId: string) {
 export async function editCategoryInCache(category: CategorySchemaType) {
     await redis.del(`category:${category.id}`)
     await writeCategoryHash(category)
+}
+
+async function writeCategoryHash(category: CategorySchemaType) {
+    await redis.hset(`category:${category.id}`, {
+        id: category.id,
+        name: category.name,
+        color: category.color,
+        budget: category.budget,
+        userId: category.userId
+    })
 }

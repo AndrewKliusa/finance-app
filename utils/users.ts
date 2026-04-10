@@ -17,3 +17,9 @@ export async function revokeUserTokens(id: string) {
     await Promise.all(tokens.map(token => redis.del(`refreshToken:${token.token}`)))
     await invalidateUserPages()
 }
+
+export async function isAdmin(userId: string) {
+    return await prisma.user.findFirst({
+        where: { id: userId, role: "ADMIN" }
+    })
+}
