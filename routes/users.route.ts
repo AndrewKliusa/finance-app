@@ -7,7 +7,7 @@ import { authenticate } from "../plugins/authenticate";
 import { checkUser } from "../plugins/checkUser";
 import { adminOnly } from "../plugins/adminOnly";
 import argon2 from "argon2"
-import { invalidateUserPages, revokeUserTokens } from "../utils/users";
+import { invalidateUserPages, revokeUserTokens } from "../services/users.service";
 
 export async function userRoutes(server: ZodServer) {
     server.get("/users", {

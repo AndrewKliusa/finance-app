@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { prisma } from "../lib/prisma";
-import { isAdmin } from "../utils/users";
+import { isAdmin } from "../services/users.service";
 
 export async function checkUser(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
     const { id } = request.params

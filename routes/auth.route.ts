@@ -7,7 +7,7 @@ import { ZodServer } from "../types/ZodServer";
 import argon2 from 'argon2'
 import { adminOnly } from "../plugins/adminOnly";
 import { authenticate } from "../plugins/authenticate";
-import { revokeUserTokens } from "../utils/users";
+import { revokeUserTokens } from "../services/users.service";
 
 export async function authRoutes(server: ZodServer) {
     server.post("/auth/register", {

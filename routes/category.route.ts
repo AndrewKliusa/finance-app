@@ -1,12 +1,12 @@
 import z from "zod";
 import { prisma } from "../lib/prisma";
-import { cacheCategory, editCategoryInCache, getCachedCategoriesForUser, getCachedCategory } from "../lib/redis/categoriesCache";
+import { cacheCategory, editCategoryInCache, getCachedCategoriesForUser, getCachedCategory, removeCategoryFromCache } from "../lib/redis/categoriesCache";
 import { CategoryCreateSchema, CategoryResponseSchema } from "../schemas/category.schema";
 import { ZodServer } from "../types/ZodServer";
 import { authenticate } from "../plugins/authenticate";
 import { checkUser } from "../plugins/checkUser";
-import { getCategory } from "../utils/categories";
-import { isAdmin } from "../utils/users";
+import { checkCategoryAccess, getCategory } from "../services/categories.service";
+import { isAdmin } from "../services/users.service";
 
 export async function authRoutes(server: ZodServer) {
     server.post("/categories", {
@@ -46,15 +46,8 @@ export async function authRoutes(server: ZodServer) {
     }, async (request, reply) => {
         const { id } = request.params
 
-        const category = await getCategory(id)
-        if (!category) {
-            return await reply.status(404).send({ message: "Category with this ID does not exist!" })
-        } else if (category.userId !== id) {
-            const hasAdminPerms = await isAdmin(request.user.id)
-            if (!hasAdminPerms) {
-                return await reply.status(403).send({ message: "You don't have permissions to edit this category!" })
-            }
-        }
+        const category = await checkCategoryAccess(reply, request.user.id, id)
+        if (!category) return;
 
         const updatedCategory = await prisma.category.update({
             where: { id },
@@ -79,15 +72,8 @@ export async function authRoutes(server: ZodServer) {
     }, async (request, reply) => {
         const { id } = request.params
 
-        const category = await getCategory(id)
-        if (!category) {
-            return await reply.status(404).send({ message: "Category with this ID does not exist!" })
-        } else if (category.userId !== id) {
-            const hasAdminPerms = await isAdmin(request.user.id)
-            if (!hasAdminPerms) {
-                return await reply.status(403).send({ message: "You don't have permissions to edit this category!" })
-            }
-        }
+        const category = await checkCategoryAccess(reply, request.user.id, id)
+        if (!category) return;
 
         const { userId, ...response } = category
         return reply.status(201).send(response)
@@ -118,5 +104,32 @@ export async function authRoutes(server: ZodServer) {
         await Promise.all(categories.map(cacheCategory))
 
         return reply.status(200).send(categories)
+    })
+
+    server.delete("/categories/:id", {
+        schema: {
+            tags: ["Categories"],
+            params: z.object({ id: z.string() }),
+            response: {
+                204: z.void(),
+                403: z.object({ message: z.string() }),
+                404: z.object({ message: z.string() })
+            }
+        },
+        preHandler: [authenticate]
+    }, async (request, reply) => {
+        const { id } = request.params
+
+        const category = await checkCategoryAccess(reply, request.user.id, id)
+        if (!category) return;
+
+        await prisma.category.delete({
+            where: { id }
+        })
+
+        await removeCategoryFromCache(category)
+
+        const { userId, ...response } = category
+        return reply.status(204).send()
     })
 }

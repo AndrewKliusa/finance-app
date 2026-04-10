@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { prisma } from "../lib/prisma";
-import { isAdmin } from "../utils/users";
+import { isAdmin } from "../services/users.service";
 
 export async function adminOnly(request: FastifyRequest, reply: FastifyReply) {
     const hasAdminPerms = await isAdmin(request.user.id)
