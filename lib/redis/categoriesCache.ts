@@ -39,5 +39,5 @@ async function writeCategoryHash(category: CategorySchemaType) {
 
 export async function removeCategoryFromCache(category: CategorySchemaType) {
     await redis.del(`category:${category.id}`)
-    await redis.srem(`users:${category.userId}:categories`, category.id)
+    await redis.srem(`user:${category.userId}:categories`, category.id)
 }

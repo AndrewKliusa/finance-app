@@ -137,3 +137,168 @@ beforeEach(async () => {
     })
     await redis.flushdb()
 })
+
+// ADDITIONAL AI GENERATED TESTS
+// TESTS BELOW WERE NOT WRITTEN BY ME
+
+describe("(AI) Category routes", () => {
+    it("(AI) Rejects a category name that is too long", async () => {
+        const res = await create({ name: "a".repeat(33), budget: 100, color: "#000000" })
+
+        expect(res.statusCode).toBe(400)
+    })
+
+    it("(AI) Rejects an invalid hex color", async () => {
+        const res = await create({ name: "test1234", budget: 100, color: "not-a-color" })
+
+        expect(res.statusCode).toBe(400)
+    })
+
+    it("(AI) Rejects a zero budget", async () => {
+        const res = await create({ name: "test1234", budget: 0, color: "#000000" })
+
+        expect(res.statusCode).toBe(400)
+    })
+
+    it("(AI) Rejects a negative budget", async () => {
+        const res = await create({ name: "test1234", budget: -50, color: "#000000" })
+
+        expect(res.statusCode).toBe(400)
+    })
+
+    it("(AI) Rejects a non-integer budget", async () => {
+        const res = await create({ name: "test1234", budget: 10.5, color: "#000000" })
+
+        expect(res.statusCode).toBe(400)
+    })
+
+    it("(AI) Rejects a missing name", async () => {
+        const res = await create({ budget: 100, color: "#000000" } as any)
+
+        expect(res.statusCode).toBe(400)
+    })
+
+    it("(AI) Accepts a three-character hex color", async () => {
+        const res = await create({ name: "test1234", budget: 100, color: "#fff" })
+
+        expect(res.statusCode).toBe(201)
+    })
+
+    it("(AI) Returns 400 on invalid UUID in get", async () => {
+        const res = await get("not-a-uuid")
+
+        expect(res.statusCode).toBe(400)
+    })
+
+    it("(AI) Returns a structured error body on 404", async () => {
+        const res = await get(emptyUUID)
+        const body = res.json()
+
+        expect(res.statusCode).toBe(404)
+        expect(body).toHaveProperty("message")
+    })
+
+    it("(AI) Create response does not expose userId", async () => {
+        const res = await create({ name: "test1234", budget: 100, color: "#000000" })
+
+        expect(res.json()).not.toHaveProperty("userId")
+    })
+
+    it("(AI) Create response contains expected fields", async () => {
+        const res = await create({ name: "test1234", budget: 100, color: "#000000" })
+        const body = res.json()
+
+        expect(body).toHaveProperty("id")
+        expect(body).toHaveProperty("name", "test1234")
+        expect(body).toHaveProperty("color", "#000000")
+        expect(body).toHaveProperty("budget", 100)
+    })
+
+    it("(AI) Rejects create without an auth token", async () => {
+        const res = await create({ name: "test1234", budget: 100, color: "#000000" }, "invalid-token")
+
+        expect(res.statusCode).toBe(401)
+    })
+
+    it("(AI) Admin can get another user's category", async () => {
+        const regRes = await register({ name: "andrew1234", password: "password" })
+        const createRes = await create({ name: "test1234", budget: 100, color: "#000000" }, regRes.json().accessToken)
+        const getRes = await get(createRes.json().id)
+
+        expect(getRes.statusCode).toBe(200)
+    })
+
+    it("(AI) Admin can delete another user's category", async () => {
+        const regRes = await register({ name: "andrew1234", password: "password" })
+        const createRes = await create({ name: "test1234", budget: 100, color: "#000000" }, regRes.json().accessToken)
+        const delRes = await del(createRes.json().id)
+
+        expect(delRes.statusCode).toBe(204)
+    })
+
+    it("(AI) Patch rejects an invalid body", async () => {
+        const createRes = await create({ name: "test1234", budget: 100, color: "#000000" })
+        const patchRes = await patch(createRes.json().id, { name: "updated", budget: -5, color: "#ffffff" })
+
+        expect(patchRes.statusCode).toBe(400)
+    })
+
+    it("(AI) Patch returns 404 for a non-existent category", async () => {
+        const patchRes = await patch(emptyUUID, { name: "updated", budget: 200, color: "#ffffff" })
+
+        expect(patchRes.statusCode).toBe(404)
+    })
+
+    it("(AI) Patch of another user's category is rejected", async () => {
+        const regRes = await register({ name: "andrew1234", password: "password" })
+        const regResTwo = await register({ name: "andrew12345", password: "password" })
+        const createRes = await create({ name: "test1234", budget: 100, color: "#000000" }, regRes.json().accessToken)
+        const patchRes = await patch(createRes.json().id, { name: "hacked", budget: 999, color: "#ffffff" }, "", regResTwo.json().accessToken)
+
+        expect(patchRes.statusCode).toBe(403)
+    })
+
+    it("(AI) Caches a category after creation", async () => {
+        const createRes = await create({ name: "test1234", budget: 100, color: "#000000" })
+        const cached = await redis.hgetall(`category:${createRes.json().id}`)
+
+        expect(cached).toHaveProperty("name", "test1234")
+    })
+
+    it("(AI) Removes a category from cache after deletion", async () => {
+        const createRes = await create({ name: "test1234", budget: 100, color: "#000000" })
+        await del(createRes.json().id)
+        const cached = await redis.hgetall(`category:${createRes.json().id}`)
+
+        expect(Object.keys(cached)).length(0)
+    })
+
+    it("(AI) Reflects a patch in subsequent get", async () => {
+        const createRes = await create({ name: "test1234", budget: 100, color: "#000000" })
+        await patch(createRes.json().id, { name: "renamed", budget: 500, color: "#abcdef" })
+        const getRes = await get(createRes.json().id)
+
+        expect(getRes.json().name).toBe("renamed")
+        expect(getRes.json().budget).toBe(500)
+        expect(getRes.json().color).toBe("#abcdef")
+    })
+
+    it("(AI) Returns an empty array for a user with no categories", async () => {
+        const regRes = await register({ name: "andrew1234", password: "password" })
+        const getRes = await getAll(regRes.json().user.id)
+
+        expect(getRes.statusCode).toBe(200)
+        expect(getRes.json()).length(0)
+    })
+
+    it("(AI) Does not return deleted categories in getAll", async () => {
+        const regRes = await register({ name: "andrew1234", password: "password" })
+        const createRes = await create({ name: "test1234", budget: 100, color: "#000000" }, regRes.json().accessToken)
+        await create({ name: "test12345", budget: 100, color: "#000000" }, regRes.json().accessToken)
+        await del(createRes.json().id)
+        const getRes = await getAll(regRes.json().user.id)
+
+        expect(getRes.json()).length(1)
+        expect(getRes.json()[0].name).toBe("test12345")
+    })
+})
