@@ -45,6 +45,8 @@ model Tag {
   userId    String  @db.Uuid
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
+
+  @@unique([userId, name])
 }
 
 model Category {

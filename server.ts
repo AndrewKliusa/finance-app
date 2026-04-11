@@ -5,13 +5,14 @@ import { serializerCompiler, validatorCompiler, ZodTypeProvider } from 'fastify-
 import { userRoutes } from './routes/users.route'
 import { errorHandler } from './handlers/errorHandler'
 import { authRoutes } from './routes/auth.route'
+import { categoryRoutes } from './routes/category.route'
 import { seed } from './prisma/seed'
 import rateLimit from '@fastify/rate-limit'
 import { prisma } from './lib/prisma'
 import { redis } from './lib/redis/redis'
 
 export function buildServer() {
-    const server = Fastify({ logger: false }).withTypeProvider<ZodTypeProvider>()
+    const server = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>()
 
     server.setValidatorCompiler(validatorCompiler)
     server.setSerializerCompiler(serializerCompiler)
@@ -32,6 +33,7 @@ export function buildServer() {
 
     server.register(userRoutes, { prefix: '/api/v1' })
     server.register(authRoutes, { prefix: '/api/v1' })
+    server.register(categoryRoutes, { prefix: '/api/v1' })
 
     server.register(rateLimit, {
         global: true,

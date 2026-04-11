@@ -4,9 +4,13 @@ import { prisma } from "../lib/prisma";
 import { generateTokenPair } from "../services/auth.service";
 import { GetUsersQueryType, NameAndPasswordType, PasswordChangeType, UserEditType } from "../schemas/user.schema";
 import { RefreshTokenType } from "../schemas/auth.schema";
+import { CategoryCreateSchemaType } from "../schemas/category.schema";
+import { buildServer } from "../server";
 
 export const emptyUUID = "00000000-0000-0000-0000-000000000000"
 export let adminAccessToken: string;
+
+export const server = buildServer()
 
 export async function generateAdminToken() {
     const admin = await prisma.user.findFirst({
@@ -108,5 +112,51 @@ export function authFunctionsBuilder(server: FastifyInstance) {
                 headers: { authorization: `Bearer ${adminAccessToken}` }
             })
         }
+    }
+}
+
+export function categoriesFunctionsBuilder(server: FastifyInstance) {
+    return {
+        async create(data: CategoryCreateSchemaType, token?: string) {
+            return await server.inject({
+                method: 'POST',
+                url: `/api/v1/categories`,
+                body: data,
+                headers: { authorization: token ? `Bearer ${token}` : `Bearer ${adminAccessToken}` }
+            })
+        },
+
+        async get(indentifier: string, path?: string, token?: string) {
+            return await server.inject({
+                method: 'GET',
+                url: `/api/v1/categories/${indentifier}` + (path ? `/${path}` : ""),
+                headers: { authorization: token ? `Bearer ${token}` : `Bearer ${adminAccessToken}` }
+            })
+        },
+
+        async getAll(userId: string, token?: string) {
+            return await server.inject({
+                method: 'GET',
+                url: `/api/v1/categories/user/${userId}`,
+                headers: { authorization: token ? `Bearer ${token}` : `Bearer ${adminAccessToken}` }
+            })
+        },
+
+        async patch(identifier: string, payload: CategoryCreateSchemaType, path?: string, token?: string) {
+            return await server.inject({
+                method: 'PATCH',
+                url: `/api/v1/categories/${identifier}` + (path ? `/${path}` : ""),
+                payload,
+                headers: { authorization: token ? `Bearer ${token}` : `Bearer ${adminAccessToken}` }
+            })
+        },
+
+        async del(identifier: string, path?: string, token?: string) {
+            return await server.inject({
+                method: 'DELETE',
+                url: `/api/v1/categories/${identifier}` + (path ? `/${path}` : ""),
+                headers: { authorization: token ? `Bearer ${token}` : `Bearer ${adminAccessToken}` }
+            })
+        },
     }
 }

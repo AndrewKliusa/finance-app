@@ -8,7 +8,7 @@ import { checkUser } from "../plugins/checkUser";
 import { checkCategoryAccess, getCategory } from "../services/categories.service";
 import { isAdmin } from "../services/users.service";
 
-export async function authRoutes(server: ZodServer) {
+export async function categoryRoutes(server: ZodServer) {
     server.post("/categories", {
         schema: {
             tags: ["Categories"],
@@ -63,7 +63,7 @@ export async function authRoutes(server: ZodServer) {
             tags: ["Categories"],
             params: z.object({ id: z.string() }),
             response: {
-                201: CategoryResponseSchema,
+                200: CategoryResponseSchema,
                 403: z.object({ message: z.string() }),
                 404: z.object({ message: z.string() })
             }
@@ -76,7 +76,7 @@ export async function authRoutes(server: ZodServer) {
         if (!category) return;
 
         const { userId, ...response } = category
-        return reply.status(201).send(response)
+        return reply.status(200).send(response)
     })
 
     server.get("/categories/user/:id", {
@@ -129,7 +129,6 @@ export async function authRoutes(server: ZodServer) {
 
         await removeCategoryFromCache(category)
 
-        const { userId, ...response } = category
         return reply.status(204).send()
     })
 }

@@ -8,6 +8,7 @@ export async function cacheCategory(category: CategorySchemaType) {
 
 export async function getCachedCategory(categoryId: string) {
     const categoryObject = await redis.hgetall(`category:${categoryId}`)
+    if (Object.keys(categoryObject).length === 0) return null
     return CategoryFromRedisSchema.parse(categoryObject)
 }
 
@@ -18,7 +19,7 @@ export async function getCachedCategoriesForUser(userId: string) {
 
     const categories = await Promise.all(userCategoriesIds.map(getCachedCategory));
 
-    return categories.filter(category => Object.keys(category).length > 0);
+    return categories.filter(category => category !== null);
 }
 
 export async function editCategoryInCache(category: CategorySchemaType) {

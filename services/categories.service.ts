@@ -25,14 +25,14 @@ export async function checkCategoryAccess(reply: FastifyReply, userId: string, c
     const category = await getCategory(categoryId);
 
     if (!category) {
-        reply.status(404).send({ message: "Category with this ID does not exist!" });
+        await reply.status(404).send({ message: "Category with this ID does not exist!" });
         return null;
     }
 
     if (category.userId !== userId) {
         const admin = await isAdmin(userId);
         if (!admin) {
-            reply.status(403).send({ message: "You don't have permissions for this category!" });
+            await reply.status(403).send({ message: "You don't have permissions for this category!" });
             return null;
         }
     }

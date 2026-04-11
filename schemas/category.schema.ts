@@ -1,5 +1,4 @@
 import z from "zod";
-import { UserSchema } from "./user.schema";
 
 export const CategorySchema = z.object({
     id: z.uuid(),
@@ -17,3 +16,4 @@ export const CategoryFromRedisSchema = CategorySchema.extend({
 });
 
 export type CategorySchemaType = z.infer<typeof CategorySchema>
+export type CategoryCreateSchemaType = z.infer<typeof CategoryCreateSchema>
