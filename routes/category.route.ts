@@ -1,12 +1,11 @@
 import z from "zod";
 import { prisma } from "../lib/prisma";
-import { cacheCategory, editCategoryInCache, getCachedCategoriesForUser, getCachedCategory, removeCategoryFromCache } from "../lib/redis/categoriesCache";
+import { cacheCategory, editCategoryInCache, getCachedCategoriesForUser, removeCategoryFromCache } from "../lib/redis/categoriesCache";
 import { CategoryCreateSchema, CategoryResponseSchema } from "../schemas/category.schema";
 import { ZodServer } from "../types/ZodServer";
 import { authenticate } from "../plugins/authenticate";
 import { checkUser } from "../plugins/checkUser";
-import { checkCategoryAccess, getCategory } from "../services/categories.service";
-import { isAdmin } from "../services/users.service";
+import { checkCategoryAccess } from "../services/categories.service";
 
 export async function categoryRoutes(server: ZodServer) {
     server.post("/categories", {

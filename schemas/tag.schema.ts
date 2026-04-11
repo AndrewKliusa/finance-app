@@ -7,5 +7,7 @@ export const TagSchema = z.object({
 })
 
 export const TagCreateSchema = TagSchema.pick({ name: true })
+export const TagResponseSchema = TagSchema.omit({ userId: true })
+
 export type TagCreateSchemaType = z.infer<typeof TagCreateSchema>
 export type TagSchemaType = z.infer<typeof TagSchema>
