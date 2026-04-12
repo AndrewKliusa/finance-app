@@ -5,7 +5,8 @@ export const UserSchema = z.object({
     name: z.string().trim().min(3).max(255),
     password: z.string().trim().min(8).max(255),
     createdAt: z.date(),
-    role: z.enum(["USER", "ADMIN"])
+    role: z.enum(["USER", "ADMIN"]),
+    globalLimit: z.number().int().nullable()
 })
 
 export const GetUsersQuerySchema = z.object({
@@ -21,7 +22,7 @@ export const PasswordChangeSchema = z.object({
 
 export const NameAndPasswordSchema = UserSchema.pick({ name: true, password: true })
 export const UserResponseSchema = UserSchema.omit({ password: true })
-export const UserEditSchema = UserSchema.pick({ name: true })
+export const UserEditSchema = UserSchema.pick({ name: true, globalLimit: true })
 
 export const UserQueryResponseSchema = z.object({
     data: z.array(UserResponseSchema),

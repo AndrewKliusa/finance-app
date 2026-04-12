@@ -1,7 +1,6 @@
-import { FastifyReply, FastifyRequest } from "fastify"
+import { FastifyReply } from "fastify"
 import { prisma } from "../lib/prisma"
 import { cacheCategory, getCachedCategory } from "../lib/redis/categoriesCache"
-import { CategorySchemaType } from "../schemas/category.schema"
 import { isAdmin } from "./users.service"
 
 export async function getCategory(categoryId: string) {

@@ -1,12 +1,19 @@
 import z from "zod";
-import { UserSchema } from "./user.schema";
+import { TagSchema } from "./tag.schema";
 import { CategorySchema } from "./category.schema";
 
-export const TranscationSchema = z.object({
+export const TransactionSchema = z.object({
     id: z.uuid(),
     amount: z.number().int().positive(),
     userId: z.uuid(),
-    categoryId: z.uuid(),
-    type: z.enum(["INCOME", "OUTCOME"]),
-    description: z.string().trim().max(255)
+    category: CategorySchema.nullable(),
+    tags: z.array(TagSchema),
+    description: z.string().trim().max(255).nullable(),
+    type: z.enum(["INCOME", "OUTCOME"])
+
+})
+
+export const TransactionCreateSchema = TransactionSchema.omit({ id: true, userId: true, tags: true, category: true }).extend({
+    tagsId: z.array(z.uuid()).default([]),
+    categoryId: z.uuid().nullable()
 })
