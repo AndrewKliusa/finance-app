@@ -11,9 +11,10 @@ import rateLimit from '@fastify/rate-limit'
 import { prisma } from './lib/prisma'
 import { redis } from './lib/redis/redis'
 import { tagRoutes } from './routes/tags.route'
+import { transactionRoutes } from './routes/transations.route'
 
 export function buildServer() {
-    const server = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>()
+    const server = Fastify({ logger: false }).withTypeProvider<ZodTypeProvider>()
 
     server.setValidatorCompiler(validatorCompiler)
     server.setSerializerCompiler(serializerCompiler)
@@ -36,6 +37,7 @@ export function buildServer() {
     server.register(authRoutes, { prefix: '/api/v1' })
     server.register(categoryRoutes, { prefix: '/api/v1' })
     server.register(tagRoutes, { prefix: '/api/v1' })
+    server.register(transactionRoutes, { prefix: '/api/v1' })
 
     server.register(rateLimit, {
         global: true,

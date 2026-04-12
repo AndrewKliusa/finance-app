@@ -37,7 +37,7 @@ export async function transactionRoutes(server: ZodServer) {
             tags: ["Transactions"],
             params: z.object({ id: z.string() }),
             response: {
-                201: TransactionSchema
+                200: TransactionSchema
             }
         },
         preHandler: [authenticate]
@@ -47,7 +47,7 @@ export async function transactionRoutes(server: ZodServer) {
         const transaction = await checkTransactionAccess(reply, request.user.id, id)
         if (!transaction) return;
 
-        return await reply.code(201).send(transaction)
+        return await reply.code(200).send(transaction)
     }),
 
     server.get("/transactions/user/:id", {
@@ -94,9 +94,13 @@ export async function transactionRoutes(server: ZodServer) {
         const transaction = await checkTransactionAccess(reply, request.user.id, id)
         if (!transaction) return;
 
+        const { type, amount, categoryId, description, tagsId } = request.body
+
         await prisma.transaction.update({
             where: { id },
-            data: request.body,
+            data: { type, amount, categoryId, description, tags: {
+                set: tagsId.map(tagId => ({ id: tagId }))
+            }},
             include: {
                 tags: true,
                 category: true

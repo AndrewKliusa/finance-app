@@ -22,7 +22,10 @@ export const PasswordChangeSchema = z.object({
 
 export const NameAndPasswordSchema = UserSchema.pick({ name: true, password: true })
 export const UserResponseSchema = UserSchema.omit({ password: true })
-export const UserEditSchema = UserSchema.pick({ name: true, globalLimit: true })
+export const UserEditSchema = UserSchema.pick({ name: true, globalLimit: true }).extend({ 
+    name: z.string().trim().min(3).max(255).optional(),
+    globalLimit: z.number().int().optional()
+})
 
 export const UserQueryResponseSchema = z.object({
     data: z.array(UserResponseSchema),

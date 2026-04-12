@@ -17,3 +17,6 @@ export const TransactionCreateSchema = TransactionSchema.omit({ id: true, userId
     tagsId: z.array(z.uuid()).default([]),
     categoryId: z.uuid().nullable()
 })
+
+export type TransactionSchemaType = z.infer<typeof TransactionSchema>
+export type TransactionCreateSchemaType = z.infer<typeof TransactionCreateSchema>
