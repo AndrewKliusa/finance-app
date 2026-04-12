@@ -3,11 +3,9 @@ import { GetUsersQueryType, NameAndPasswordType, UserEditType } from '../schemas
 import { RefreshTokenType } from "../schemas/auth.schema";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "../lib/prisma";
-import { redis } from "../lib/redis";
-import { adminAccessToken, authFunctionsBuilder, userFunctionsBuilder } from './helpers';
+import { redis } from "../lib/redis/redis";
+import { adminAccessToken, authFunctionsBuilder, server, userFunctionsBuilder } from './helpers';
 import { generateAdminToken } from "./helpers";
-
-const server = buildServer()
 
 const { register, login, refresh, logout, promoteAdmin } = authFunctionsBuilder(server)
 const { del } = userFunctionsBuilder(server)

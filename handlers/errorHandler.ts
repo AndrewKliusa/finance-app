@@ -8,8 +8,9 @@ export function errorHandler(error: FastifyError, _request: FastifyRequest, repl
         if (error.code === "P2002") {
             return reply.code(409).send({ message: `Object with this ${conflictingField} field already exists!`});
         } else if (error.code === "P2025") {
-            return reply.code(404).send({   message: `Object with this field does not exist!`});
-
+            return reply.code(404).send({ message: `Object with this field does not exist!` });
+        } else if (error.code === "P2023") {
+            return reply.code(400).send({ message: `Validation error ofone of the fields!` });
         }
     }
 
