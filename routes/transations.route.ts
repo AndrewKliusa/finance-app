@@ -1,10 +1,11 @@
 import z from "zod";
 import { prisma } from "../lib/prisma";
 import { authenticate } from "../preHandlers/authenticate";
-import { TransactionCreateSchema, TransactionSchema } from "../schemas/transaction.schema";
+import { TransactionCreateSchema, TransactionSchema, TransactionUpdateSchema } from "../schemas/transaction.schema";
 import { checkTransactionAccess } from "../services/transactions.service";
 import { ZodServer } from "../types/ZodServer";
 import { checkUser } from "../preHandlers/checkUser";
+import { notificationsQueue } from "../lib/bullmq";
 
 export async function transactionRoutes(server: ZodServer) {
     server.post("/transactions", {
@@ -29,6 +30,7 @@ export async function transactionRoutes(server: ZodServer) {
             }
         })
 
+        await notificationsQueue.add("budget-check", { transaction })
         return await reply.code(201).send(transaction)
     }),
 
@@ -82,7 +84,7 @@ export async function transactionRoutes(server: ZodServer) {
         schema: {
             tags: ["Transactions"],
             params: z.object({ id: z.string() }),
-            body: TransactionCreateSchema,
+            body: TransactionUpdateSchema,
             response: {
                 200: z.void(),
             }
@@ -94,12 +96,12 @@ export async function transactionRoutes(server: ZodServer) {
         const transaction = await checkTransactionAccess(reply, request.user.id, id)
         if (!transaction) return;
 
-        const { type, amount, categoryId, description, tagsId } = request.body
+        const { amount, categoryId, description, tagsId } = request.body
 
         await prisma.transaction.update({
             where: { id },
-            data: { type, amount, categoryId, description, tags: {
-                set: tagsId.map(tagId => ({ id: tagId }))
+            data: { amount, categoryId, description, tags: {
+                set: tagsId && tagsId?.map(tagId => ({ id: tagId }))
             }},
             include: {
                 tags: true,
@@ -107,6 +109,7 @@ export async function transactionRoutes(server: ZodServer) {
             }
         })
 
+        await notificationsQueue.add("budget-check", { transaction })
         return reply.status(200).send()
     }),
 

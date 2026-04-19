@@ -115,7 +115,7 @@ describe("(AI) User routes", () => {
     })
 
     it("(AI) Rejects an invalid refresh token", async () => {
-        const refreshRes = await refresh({ refreshToken: "invalid-token" })
+        const refreshRes = await refresh({ refreshToken: "a".repeat(64) })
 
         expect(refreshRes.statusCode).toBe(401)
     })
