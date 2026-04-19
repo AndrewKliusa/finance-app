@@ -1,10 +1,10 @@
 import z from "zod";
 import { prisma } from "../lib/prisma";
-import { authenticate } from "../plugins/authenticate";
+import { authenticate } from "../preHandlers/authenticate";
 import { TransactionCreateSchema, TransactionSchema } from "../schemas/transaction.schema";
 import { checkTransactionAccess } from "../services/transactions.service";
 import { ZodServer } from "../types/ZodServer";
-import { checkUser } from "../plugins/checkUser";
+import { checkUser } from "../preHandlers/checkUser";
 
 export async function transactionRoutes(server: ZodServer) {
     server.post("/transactions", {

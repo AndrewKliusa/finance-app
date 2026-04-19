@@ -5,8 +5,8 @@ import { NameAndPasswordSchema, UserResponseSchema } from "../schemas/user.schem
 import { generateTokenPair, revokeRefreshToken, rotateRefreshToken } from "../services/auth.service";
 import { ZodServer } from "../types/ZodServer";
 import argon2 from 'argon2'
-import { adminOnly } from "../plugins/adminOnly";
-import { authenticate } from "../plugins/authenticate";
+import { adminOnly } from "../preHandlers/adminOnly";
+import { authenticate } from "../preHandlers/authenticate";
 import { revokeUserTokens } from "../services/users.service";
 
 export async function authRoutes(server: ZodServer) {
