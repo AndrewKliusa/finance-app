@@ -30,7 +30,9 @@ export async function transactionRoutes(server: ZodServer) {
             }
         })
 
-        await notificationsQueue.add("budget-check", { transaction })
+        if (type === "OUTCOME") {
+            await notificationsQueue.add("budget-check", transaction)
+        }
         return await reply.code(201).send(transaction)
     }),
 
@@ -98,7 +100,7 @@ export async function transactionRoutes(server: ZodServer) {
 
         const { amount, categoryId, description, tagsId } = request.body
 
-        await prisma.transaction.update({
+        const category = await prisma.transaction.update({
             where: { id },
             data: { amount, categoryId, description, tags: {
                 set: tagsId && tagsId?.map(tagId => ({ id: tagId }))
@@ -109,7 +111,9 @@ export async function transactionRoutes(server: ZodServer) {
             }
         })
 
-        await notificationsQueue.add("budget-check", { transaction })
+        if (category.type === "OUTCOME") {
+            await notificationsQueue.add("budget-check", { transaction })
+        }
         return reply.status(200).send()
     }),
 

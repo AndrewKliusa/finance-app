@@ -9,7 +9,7 @@ const notificationsSecret = new TextEncoder().encode(process.env.JWT_REFRESH_SEC
 const ACCESS_TOKEN_TTL = '15m'
 const REFRESH_TOKEN_JWT_EXP = '30d'
 const REFRESH_TOKEN_TTL = 60 * 60 * 24 * 30
-const NOTIFICATIONS_TOKEN_TLL = REFRESH_TOKEN_TTL
+const NOTIFICATIONS_TOKEN_TLL = ACCESS_TOKEN_TTL
 
 export async function generateTokenPair(userId: string) {
     const accessToken = await new SignJWT({ sub: userId })
@@ -31,7 +31,7 @@ export async function generateTokenPair(userId: string) {
         .setExpirationTime(NOTIFICATIONS_TOKEN_TLL)
         .setJti(crypto.randomUUID())
         .setIssuedAt()
-        .sign(refreshSecret)
+        .sign(notificationsSecret)
 
     const expiresAt = new Date(Date.now() +  REFRESH_TOKEN_TTL * 1000)
 

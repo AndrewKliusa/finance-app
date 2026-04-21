@@ -6,7 +6,7 @@ import { categoriesFunctionsBuilder } from "./helpers/categoriesHelper";
 import { server, emptyUUID, generateAdminToken } from "./helpers/helper";
 
 const { create, get, getAll, patch, del } = categoriesFunctionsBuilder(server);
-const { register} = authFunctionsBuilder(server)
+const { register } = authFunctionsBuilder(server)
 
 describe("Categories", () => {
     it("Creates a category", async () => {

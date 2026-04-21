@@ -1,10 +1,13 @@
+import { config } from "dotenv"
+config({ path: ".env.test" })
+
 import { Worker } from "bullmq"
 import { redis } from "../lib/redis/redis"
 import { TransactionSchemaType } from "../schemas/transaction.schema"
 import { prisma } from "../lib/prisma"
 import { sendBudgetExceededNotification } from "../services/notifications.service"
 
-new Worker<TransactionSchemaType, void, "budget-check">("notifications", async (job) => {
+const worker = new Worker<TransactionSchemaType, void, "budget-check">("notifications", async (job) => {
     if (job.name == "budget-check") {
         const transaction = job.data
 
@@ -28,4 +31,16 @@ new Worker<TransactionSchemaType, void, "budget-check">("notifications", async (
     }
 }, {
     connection: redis
+})
+
+worker.on("ready", () => {
+  console.log("Notification worker is running")
+})
+
+worker.on("completed", (job) => {
+  console.log(`Job ${job.id} completed`)
+})
+
+worker.on("failed", (job, error) => {
+  console.error(`Job ${job?.id} failed:`, error)
 })

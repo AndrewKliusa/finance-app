@@ -15,6 +15,7 @@ export default defineConfig({
                 inline: [/generated\/prisma/]
             }
         },
-        fileParallelism: false
+        fileParallelism: false,
+        setupFiles: ["./tests/helpers/helper.ts"],
     }
 })
