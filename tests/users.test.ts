@@ -1,10 +1,9 @@
-import { afterAll, beforeAll, describe, expect, it, afterEach, beforeEach } from 'vitest'
-import { buildServer } from '../server'
-import { NameAndPasswordType, NameAndPasswordSchema, UserEditType, GetUsersQuerySchema, GetUsersQueryType } from '../schemas/user.schema';
+import { afterAll, beforeAll, describe, expect, it, beforeEach } from 'vitest'
 import { prisma } from '../lib/prisma';
-import { generateAdminToken, emptyUUID, userFunctionsBuilder, adminAccessToken, authFunctionsBuilder, server } from './helpers';
 import { redis } from '../lib/redis/redis';
-import argon2 from "argon2"
+import { authFunctionsBuilder } from './helpers/authHelper';
+import { server, emptyUUID, generateAdminToken } from './helpers/helper';
+import { userFunctionsBuilder } from './helpers/usersHelper';
 
 const { get, del, patch, query, changePassword } = userFunctionsBuilder(server)
 const { register, login } = authFunctionsBuilder(server)
@@ -174,7 +173,9 @@ beforeAll(async () => {
 
 afterAll(async () => {
     await server.close()
-    await prisma.user.deleteMany()
+    await prisma.user.deleteMany({
+        where: { name: { not: 'admin' } }
+    })
 })
 
 beforeEach(async () => {

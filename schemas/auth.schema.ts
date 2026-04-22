@@ -2,8 +2,9 @@ import { z } from 'zod'
 import { UserResponseSchema } from './user.schema'
 
 export const AuthResponseSchema = z.object({
-    accessToken: z.string(),
-    refreshToken: z.string(),
+    accessToken: z.string().min(64),
+    refreshToken: z.string().min(64).min(64),
+    notificationsToken: z.string().min(64),
     user: UserResponseSchema
 })
 

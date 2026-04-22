@@ -3,8 +3,8 @@ import { prisma } from "../lib/prisma";
 import { cacheCategory, editCategoryInCache, getCachedCategoriesForUser, removeCategoryFromCache } from "../lib/redis/categoriesCache";
 import { CategoryCreateSchema, CategoryResponseSchema } from "../schemas/category.schema";
 import { ZodServer } from "../types/ZodServer";
-import { authenticate } from "../plugins/authenticate";
-import { checkUser } from "../plugins/checkUser";
+import { authenticate } from "../preHandlers/authenticate";
+import { checkUser } from "../preHandlers/checkUser";
 import { checkCategoryAccess } from "../services/categories.service";
 
 export async function categoryRoutes(server: ZodServer) {

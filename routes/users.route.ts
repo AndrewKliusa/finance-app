@@ -3,9 +3,9 @@ import { GetUsersQuerySchema, NameAndPasswordSchema, PasswordChangeSchema, UserE
 import { ZodServer } from "../types/ZodServer"
 import { prisma } from "../lib/prisma"
 import { redis } from "../lib/redis/redis";
-import { authenticate } from "../plugins/authenticate";
-import { checkUser } from "../plugins/checkUser";
-import { adminOnly } from "../plugins/adminOnly";
+import { authenticate } from "../preHandlers/authenticate";
+import { checkUser } from "../preHandlers/checkUser";
+import { adminOnly } from "../preHandlers/adminOnly";
 import argon2 from "argon2"
 import { invalidateUserPages, revokeUserTokens } from "../services/users.service";
 

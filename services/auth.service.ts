@@ -4,10 +4,12 @@ import { redis } from '../lib/redis/redis'
 
 const accessSecret = new TextEncoder().encode(process.env.JWT_ACCESS_SECRET)
 const refreshSecret = new TextEncoder().encode(process.env.JWT_REFRESH_SECRET)
+const notificationsSecret = new TextEncoder().encode(process.env.JWT_REFRESH_SECRET)
 
 const ACCESS_TOKEN_TTL = '15m'
 const REFRESH_TOKEN_JWT_EXP = '30d'
 const REFRESH_TOKEN_TTL = 60 * 60 * 24 * 30
+const NOTIFICATIONS_TOKEN_TLL = ACCESS_TOKEN_TTL
 
 export async function generateTokenPair(userId: string) {
     const accessToken = await new SignJWT({ sub: userId })
@@ -24,6 +26,13 @@ export async function generateTokenPair(userId: string) {
         .setIssuedAt()
         .sign(refreshSecret)
 
+    const notificationsToken = await new SignJWT({ sub: userId })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setExpirationTime(NOTIFICATIONS_TOKEN_TLL)
+        .setJti(crypto.randomUUID())
+        .setIssuedAt()
+        .sign(notificationsSecret)
+
     const expiresAt = new Date(Date.now() +  REFRESH_TOKEN_TTL * 1000)
 
     await prisma.refreshToken.create({
@@ -32,7 +41,7 @@ export async function generateTokenPair(userId: string) {
 
     await redis.set(`refreshToken:${refreshToken}`, userId, 'EX', REFRESH_TOKEN_TTL)
 
-    return { accessToken, refreshToken }
+    return { accessToken, refreshToken, notificationsToken }
 }
 
 export async function rotateRefreshToken(oldToken: string) {
@@ -65,5 +74,10 @@ export async function revokeRefreshToken(token: string) {
 
 export async function verifyAccessToken(token: string) {
     const { payload } = await jwtVerify(token, accessSecret)
+    return payload;
+}
+
+export async function verifyNotificationsToken(token: string) {
+    const { payload } = await jwtVerify(token, notificationsSecret)
     return payload;
 }

@@ -12,6 +12,7 @@ import { prisma } from './lib/prisma'
 import { redis } from './lib/redis/redis'
 import { tagRoutes } from './routes/tags.route'
 import { transactionRoutes } from './routes/transations.route'
+import { notificationsRoutes } from './routes/notifications.route'
 
 export function buildServer() {
     const server = Fastify({ logger: false }).withTypeProvider<ZodTypeProvider>()
@@ -38,6 +39,7 @@ export function buildServer() {
     server.register(categoryRoutes, { prefix: '/api/v1' })
     server.register(tagRoutes, { prefix: '/api/v1' })
     server.register(transactionRoutes, { prefix: '/api/v1' })
+    server.register(notificationsRoutes, { prefix: '/api/v1' })
 
     server.register(rateLimit, {
         global: true,

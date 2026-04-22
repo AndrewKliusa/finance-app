@@ -2,8 +2,8 @@ import z from "zod";
 import { prisma } from "../lib/prisma";
 import { TagCreateSchema, TagResponseSchema } from "../schemas/tag.schema";
 import { ZodServer } from "../types/ZodServer";
-import { authenticate } from "../plugins/authenticate";
-import { checkUser } from "../plugins/checkUser";
+import { authenticate } from "../preHandlers/authenticate";
+import { checkUser } from "../preHandlers/checkUser";
 import { cacheTag, editTagInCache, getCachedTagsForUser, removeTagFromCache } from "../lib/redis/tagsCache";
 import { checkTagAccess } from "../services/tags.service";
 

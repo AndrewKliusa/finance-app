@@ -4,8 +4,9 @@ import { RefreshTokenType } from "../schemas/auth.schema";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "../lib/prisma";
 import { redis } from "../lib/redis/redis";
-import { adminAccessToken, authFunctionsBuilder, server, userFunctionsBuilder } from './helpers';
-import { generateAdminToken } from "./helpers";
+import { authFunctionsBuilder } from "./helpers/authHelper";
+import { server, adminAccessToken, generateAdminToken } from "./helpers/helper";
+import { userFunctionsBuilder } from "./helpers/usersHelper";
 
 const { register, login, refresh, logout, promoteAdmin } = authFunctionsBuilder(server)
 const { del } = userFunctionsBuilder(server)
@@ -115,7 +116,7 @@ describe("(AI) User routes", () => {
     })
 
     it("(AI) Rejects an invalid refresh token", async () => {
-        const refreshRes = await refresh({ refreshToken: "invalid-token" })
+        const refreshRes = await refresh({ refreshToken: "a".repeat(64) })
 
         expect(refreshRes.statusCode).toBe(401)
     })

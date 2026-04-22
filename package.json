@@ -9,7 +9,8 @@
     "dev:reset": "dotenv -e .env -- prisma migrate reset --force",
     "test:push": "dotenv -e .env.test -- prisma db push",
     "test:run": "dotenv -e .env.test -- vitest run",
-    "test": "npm run test:push && npm run test:run"
+    "test": "npm run test:push && npm run test:run",
+    "workers": "npx tsx workers/notifications.worker.ts"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +22,7 @@
     "@fastify/swagger-ui": "^5.2.5",
     "@prisma/client": "^6.19.2",
     "argon2": "^0.44.0",
+    "bullmq": "^5.74.1",
     "dotenv": "^17.3.1",
     "fastify": "^5.8.4",
     "fastify-type-provider-zod": "^6.1.0",
