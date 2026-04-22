@@ -11,11 +11,17 @@ const worker = new Worker<TransactionSchemaType, void, "budget-check">("notifica
     if (job.name == "budget-check") {
         const transaction = job.data
 
-        const categoryTransactions = await prisma.transaction.findMany({
-            where: { categoryId: transaction.category?.id }
+        const categoryOutcomeResult = await prisma.transaction.aggregate({
+            where: { userId: transaction.userId, categoryId: transaction.category?.id, type: "OUTCOME" },
+            _sum: { amount: true }
         })
 
-        const categorySpendings = categoryTransactions.reduce((total, curTransaction) => total + curTransaction.amount, 0)
+        const categoryIncomeResult = await prisma.transaction.aggregate({
+            where: { userId: transaction.userId, categoryId: transaction.category?.id, type: "INCOME" },
+            _sum: { amount: true }
+        })
+
+        const categorySpendings = (categoryOutcomeResult._sum.amount ?? 0) - (categoryIncomeResult._sum.amount ?? 0)
         if (transaction.category) {
             if (categorySpendings > transaction.category?.budget) {
                 await sendBudgetExceededNotification(transaction.userId, transaction)

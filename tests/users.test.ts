@@ -173,7 +173,9 @@ beforeAll(async () => {
 
 afterAll(async () => {
     await server.close()
-    await prisma.user.deleteMany()
+    await prisma.user.deleteMany({
+        where: { name: { not: 'admin' } }
+    })
 })
 
 beforeEach(async () => {
