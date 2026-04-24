@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, beforeEach } from "vitest"
-import { admin, emptyUUID, generateAdminToken, server } from "./helpers/helper"
+import { admin, emptyUUID, generateAdminToken } from "./helpers/helper"
 import { closeNotificationsStream, connectNotificationsStream, readNotificationsStream } from "./helpers/notificationsHelper"
 import { authFunctionsBuilder } from "./helpers/authHelper"
 import { userFunctionsBuilder } from "./helpers/usersHelper"
@@ -7,6 +7,7 @@ import { transactionsFunctionsBuilder } from "./helpers/transactionsHelper"
 import { prisma } from "../lib/prisma"
 import { redis } from "../lib/redis/redis"
 import { categoriesFunctionsBuilder } from "./helpers/categoriesHelper"
+import { server } from "../main"
 
 let streamReader: ReadableStreamDefaultReader
 

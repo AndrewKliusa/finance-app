@@ -112,7 +112,7 @@ export async function transactionRoutes(server: ZodServer) {
         })
 
         if (category.type === "OUTCOME") {
-            await notificationsQueue.add("budget-check", { transaction })
+            await notificationsQueue.add("budget-check", transaction)
         }
         return reply.status(200).send()
     }),
@@ -132,9 +132,13 @@ export async function transactionRoutes(server: ZodServer) {
         const transaction = await checkTransactionAccess(reply, request.user.id, id)
         if (!transaction) return;
 
-        await prisma.transaction.delete({
+        const category = await prisma.transaction.delete({
             where: { id }
         })
+
+        if (category.type === "OUTCOME") {
+            await notificationsQueue.add("budget-check", transaction)
+        }
 
         return reply.status(204).send()
     })

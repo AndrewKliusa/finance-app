@@ -5,8 +5,9 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { prisma } from "../lib/prisma";
 import { redis } from "../lib/redis/redis";
 import { authFunctionsBuilder } from "./helpers/authHelper";
-import { server, adminAccessToken, generateAdminToken } from "./helpers/helper";
+import { adminAccessToken, generateAdminToken } from "./helpers/helper";
 import { userFunctionsBuilder } from "./helpers/usersHelper";
+import { server } from "../main";
 
 const { register, login, refresh, logout, promoteAdmin } = authFunctionsBuilder(server)
 const { del } = userFunctionsBuilder(server)

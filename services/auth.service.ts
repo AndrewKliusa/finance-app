@@ -4,7 +4,7 @@ import { redis } from '../lib/redis/redis'
 
 const accessSecret = new TextEncoder().encode(process.env.JWT_ACCESS_SECRET)
 const refreshSecret = new TextEncoder().encode(process.env.JWT_REFRESH_SECRET)
-const notificationsSecret = new TextEncoder().encode(process.env.JWT_REFRESH_SECRET)
+const notificationsSecret = new TextEncoder().encode(process.env.JWT_NOTIFICATIONS_SECRET)
 
 const ACCESS_TOKEN_TTL = '15m'
 const REFRESH_TOKEN_JWT_EXP = '30d'

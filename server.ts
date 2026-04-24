@@ -13,13 +13,18 @@ import { redis } from './lib/redis/redis'
 import { tagRoutes } from './routes/tags.route'
 import { transactionRoutes } from './routes/transations.route'
 import { notificationsRoutes } from './routes/notifications.route'
+import cors from '@fastify/cors'
 
-export function buildServer() {
+export async function buildServer() {
     const server = Fastify({ logger: false }).withTypeProvider<ZodTypeProvider>()
 
     server.setValidatorCompiler(validatorCompiler)
     server.setSerializerCompiler(serializerCompiler)
     server.setErrorHandler(errorHandler);
+
+    await server.register(cors, {
+        origin: "*"
+    })
 
     server.register(swagger, {
         openapi: {

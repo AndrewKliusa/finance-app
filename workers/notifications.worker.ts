@@ -8,7 +8,7 @@ import { prisma } from "../lib/prisma"
 import { sendBudgetExceededNotification } from "../services/notifications.service"
 
 const worker = new Worker<TransactionSchemaType, void, "budget-check">("notifications", async (job) => {
-    if (job.name == "budget-check") {
+    if (job.name === "budget-check") {
         const transaction = job.data
 
         const categoryOutcomeResult = await prisma.transaction.aggregate({

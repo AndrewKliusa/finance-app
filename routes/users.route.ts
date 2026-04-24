@@ -34,9 +34,11 @@ export async function userRoutes(server: ZodServer) {
             omit: { password: true }
         })
 
+        const total = await prisma.user.count()
+
         await redis.set(cacheKey, JSON.stringify(users), "EX", 60)
 
-        return reply.code(200).send({ data: users, total: users.length, page, limit })
+        return reply.code(200).send({ data: users, total, page, limit })
     })
 
     server.get("/users/:id", {

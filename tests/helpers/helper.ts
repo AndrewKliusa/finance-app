@@ -11,8 +11,6 @@ export let adminAccessToken: string
 export let adminNotificationsToken: string
 export let admin: UserType
 
-export const server = buildServer()
-
 export async function generateAdminToken() {
     admin = await prisma.user.findFirstOrThrow({
         where: { name: "admin" }

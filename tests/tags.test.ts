@@ -2,8 +2,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "../lib/prisma";
 import { redis } from "../lib/redis/redis";
 import { authFunctionsBuilder } from "./helpers/authHelper";
-import { server, emptyUUID, generateAdminToken } from "./helpers/helper";
+import { emptyUUID, generateAdminToken } from "./helpers/helper";
 import { tagsFunctionsBuilder } from "./helpers/tagsHelper";
+import { server } from "../main";
 
 const { create, get, getAll, patch, del } = tagsFunctionsBuilder(server);
 const { register } = authFunctionsBuilder(server)
