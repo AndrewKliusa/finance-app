@@ -1,4 +1,4 @@
-import { adminNotificationsToken, generateAdminToken } from "./helper"
+import { adminNotificationsToken, generateAdminToken } from "./helper.js"
 
 export async function connectNotificationsStream(token: string = adminNotificationsToken) {
     const response = await fetch(`http://localhost:3000/api/v1/notifications/stream?token=${token}`)

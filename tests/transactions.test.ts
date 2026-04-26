@@ -3,10 +3,9 @@ import { prisma } from "../lib/prisma";
 import { redis } from "../lib/redis/redis";
 import { authFunctionsBuilder } from "./helpers/authHelper";
 import { categoriesFunctionsBuilder } from "./helpers/categoriesHelper";
-import { emptyUUID, generateAdminToken } from "./helpers/helper";
+import { emptyUUID, generateAdminToken, server } from "./helpers/helper.js";
 import { tagsFunctionsBuilder } from "./helpers/tagsHelper";
 import { transactionsFunctionsBuilder } from "./helpers/transactionsHelper";
-import { server } from "../main";
 
 const { create, get, getAll, patch, del } = transactionsFunctionsBuilder(server);
 const { create: createCategory, del: delCategory } = categoriesFunctionsBuilder(server);

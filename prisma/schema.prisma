@@ -73,3 +73,13 @@ model Transaction {
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   tags      Tag[]
 }
+
+model Report {
+  id        String  @id @default(uuid()) @db.Uuid
+  year      Int
+  month     Int?
+  userId    String  @db.Uuid
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  data      Json
+  createdAt DateTime @default(now())
+}

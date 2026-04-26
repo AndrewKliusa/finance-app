@@ -15,14 +15,14 @@ import { transactionRoutes } from './routes/transations.route'
 import { notificationsRoutes } from './routes/notifications.route'
 import cors from '@fastify/cors'
 
-export async function buildServer() {
+export function buildServer() {
     const server = Fastify({ logger: false }).withTypeProvider<ZodTypeProvider>()
 
     server.setValidatorCompiler(validatorCompiler)
     server.setSerializerCompiler(serializerCompiler)
     server.setErrorHandler(errorHandler);
 
-    await server.register(cors, {
+    server.register(cors, {
         origin: "*"
     })
 

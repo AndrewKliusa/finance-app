@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify"
 import { TagCreateSchemaType } from "../../schemas/tag.schema"
-import { adminAccessToken } from "./helper"
+import { adminAccessToken } from "./helper.js"
 
 // Tags functions builder was created by AI, as it is so similar to categories and requires just manualy changing some names.
 export function tagsFunctionsBuilder(server: FastifyInstance) {

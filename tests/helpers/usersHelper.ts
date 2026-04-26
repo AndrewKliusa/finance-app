@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify"
 import { GetUsersQueryType, UserEditType, PasswordChangeType } from "../../schemas/user.schema"
-import { adminAccessToken } from "./helper"
+import { adminAccessToken } from "./helper.js"
 
 export function userFunctionsBuilder(server: FastifyInstance) {
     return {

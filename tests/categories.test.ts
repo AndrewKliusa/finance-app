@@ -3,8 +3,7 @@ import { prisma } from "../lib/prisma";
 import { redis } from "../lib/redis/redis";
 import { authFunctionsBuilder } from "./helpers/authHelper";
 import { categoriesFunctionsBuilder } from "./helpers/categoriesHelper";
-import { emptyUUID, generateAdminToken } from "./helpers/helper";
-import { server } from "../main";
+import { emptyUUID, generateAdminToken, server } from "./helpers/helper.js";
 
 const { create, get, getAll, patch, del } = categoriesFunctionsBuilder(server);
 const { register } = authFunctionsBuilder(server)

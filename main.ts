@@ -5,17 +5,12 @@ import { FastifyInstance } from 'fastify'
 
 enviromentSchema.parse(process.env)
 
-export let server: FastifyInstance
-
-export async function startServer() {
-    const server = await buildServer()
-    server.listen({ port: 3000 }, (error) => {
-        if (error) {
-            server.log.error(error)
-        }
-    })
-}
-
+const server = buildServer()
+server.listen({ port: 3000 }, (error) => {
+    if (error) {
+        server.log.error(error)
+    }
+})
 
 async function shutdown() {
     console.log("Shutting down...")

@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify"
 import { CategoryCreateSchemaType } from "../../schemas/category.schema"
-import { adminAccessToken } from "./helper"
+import { adminAccessToken } from "./helper.js"
 
 export function categoriesFunctionsBuilder(server: FastifyInstance) {
     return {

@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify"
 import { TransactionCreateSchemaType } from "../../schemas/transaction.schema"
-import { adminAccessToken } from "./helper"
+import { adminAccessToken } from "./helper.js"
 
 export function transactionsFunctionsBuilder(server: FastifyInstance) {
     return {
