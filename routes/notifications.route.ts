@@ -1,4 +1,3 @@
-import z from "zod"
 import { NotificationsQuerySchema } from "../schemas/notifications"
 import { ZodServer } from "../types/ZodServer"
 import { checkNotificationsToken } from "../preHandlers/checkNotificationsToken"

@@ -27,7 +27,8 @@ model User {
   role      Role     @default(USER)
   categories   Category[]
   tags         Tag[]
-  transactions Transaction[]  
+  transactions Transaction[]
+  reports   Report[]
   globalLimit Int?   @default(0)
 }
 
@@ -46,6 +47,7 @@ model Tag {
   userId    String  @db.Uuid
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
+  createdAt DateTime @default(now())
 
   @@unique([userId, name])
 }
@@ -58,6 +60,7 @@ model Category {
   userId    String  @db.Uuid
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
+  createdAt DateTime @default(now())
 
   @@unique([userId, name])
 }
@@ -72,6 +75,7 @@ model Transaction {
   userId    String  @db.Uuid
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   tags      Tag[]
+  createdAt DateTime @default(now())
 }
 
 model Report {
