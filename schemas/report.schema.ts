@@ -1,14 +1,11 @@
 import z from "zod";
-import { JsonValue } from '../generated/prisma/internal/prismaNamespace';
-import { expect } from 'vitest';
 
 const ReportDataSchema = z.strictObject({
     summary: z.object({
         totalIncome: z.number(),
         totalExpenses: z.number(),
         net: z.number(),
-        transactionCount: z.number().int(),
-        savingsRate: z.number(),
+        transactionCount: z.number().int()
     }),
     categoriesBreakdown: z.array(z.object({
         categoryId: z.uuid(),
@@ -16,8 +13,7 @@ const ReportDataSchema = z.strictObject({
         totalSpent: z.number(),
         transactionCount: z.number().int(),
         budgetAmount: z.number().nullable(),
-        budgetUtilization: z.number().nullable(),
-        isOverBudget: z.boolean(),
+        isOverBudget: z.boolean()
     })),
     dailyTrend: z.array(z.object({
         date: z.string(),
