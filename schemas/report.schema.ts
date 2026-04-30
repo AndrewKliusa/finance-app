@@ -34,12 +34,16 @@ export const ReportSchema = z.object({
     year: z.number().max(4).min(4),
     month: z.number().nullable(),
     userId: z.uuid(),
+    data: ReportDataSchema
+})
+
+export const ReportResponseSchema = ReportSchema.extend({
     data: z.any()
 })
 
 export const reportQuerySchema = z.object({
-    year: z.number().positive().min(2026),
-    month: z.number().positive().min(1).min(12)
+    year: z.coerce.number().positive().min(2026),
+    month: z.coerce.number().positive().min(1).max(12)
 })
 
 export const reportJobQuerySchema = reportQuerySchema.extend({

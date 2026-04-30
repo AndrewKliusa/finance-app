@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "../lib/prisma";
 import { redis } from "../lib/redis/redis";
-import { authFunctionsBuilder } from "./helpers/authHelper";
+import { authFunctionsBuilder } from "./helpers/auth.helper";
 import { adminAccessToken, generateAdminToken, server } from "./helpers/helper.js";
-import { userFunctionsBuilder } from "./helpers/usersHelper";
+import { userFunctionsBuilder } from "./helpers/users.helper";
 
 const { register, login, refresh, logout, promoteAdmin } = authFunctionsBuilder(server)
 const { del } = userFunctionsBuilder(server)

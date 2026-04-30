@@ -1,11 +1,11 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "../lib/prisma";
 import { redis } from "../lib/redis/redis";
-import { authFunctionsBuilder } from "./helpers/authHelper";
-import { categoriesFunctionsBuilder } from "./helpers/categoriesHelper";
+import { authFunctionsBuilder } from "./helpers/auth.helper";
+import { categoriesFunctionsBuilder } from "./helpers/categories.helper";
 import { emptyUUID, generateAdminToken, server } from "./helpers/helper.js";
-import { tagsFunctionsBuilder } from "./helpers/tagsHelper";
-import { transactionsFunctionsBuilder } from "./helpers/transactionsHelper";
+import { tagsFunctionsBuilder } from "./helpers/tags.helper";
+import { transactionsFunctionsBuilder } from "./helpers/transactions.helper";
 
 const { create, get, getAll, patch, del } = transactionsFunctionsBuilder(server);
 const { create: createCategory, del: delCategory } = categoriesFunctionsBuilder(server);

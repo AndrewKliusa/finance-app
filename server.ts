@@ -14,9 +14,10 @@ import { tagRoutes } from './routes/tags.route'
 import { transactionRoutes } from './routes/transations.route'
 import { notificationsRoutes } from './routes/notifications.route'
 import cors from '@fastify/cors'
+import { reportRoutes } from './routes/reports.route'
 
 export function buildServer() {
-    const server = Fastify({ logger: false }).withTypeProvider<ZodTypeProvider>()
+    const server = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>()
 
     server.setValidatorCompiler(validatorCompiler)
     server.setSerializerCompiler(serializerCompiler)
@@ -45,6 +46,7 @@ export function buildServer() {
     server.register(tagRoutes, { prefix: '/api/v1' })
     server.register(transactionRoutes, { prefix: '/api/v1' })
     server.register(notificationsRoutes, { prefix: '/api/v1' })
+    server.register(reportRoutes, { prefix: '/api/v1' })
 
     server.register(rateLimit, {
         global: true,

@@ -3,7 +3,7 @@ config({ path: ".env.test" })
 
 import { Worker } from "bullmq"
 import { redis } from "../lib/redis/redis"
-import { ReportJobQuerySchemaType } from '../schemas/report.schema';
+import { ReportJobQuerySchemaType, ReportSchema } from '../schemas/report.schema';
 import { prisma } from "../lib/prisma";
 
 const worker = new Worker<ReportJobQuerySchemaType, void, "report">("reports", async (job) => {
@@ -59,11 +59,6 @@ const worker = new Worker<ReportJobQuerySchemaType, void, "report">("reports", a
     })
     const categoriesBreakdown = await Promise.all(categoriesBreakdownPromises)
 
-    const transactionsTypeAmountDate = await prisma.transaction.findMany({
-        where: { userId, createdAt: reportDateRange },
-        select: { type: true, amount: true, createdAt: true }
-    })
-
     // dailyTrend is written by AI. I was clueless how to implement it, so AI suggested just using
     // plain SQL query, which is a great solution
     const dailyTrend = await prisma.$queryRaw<
@@ -80,6 +75,40 @@ const worker = new Worker<ReportJobQuerySchemaType, void, "report">("reports", a
     GROUP BY date
     ORDER BY date ASC
     `
+
+    const topTransactionsQueryResult = await prisma.transaction.findMany({
+        where: { userId, createdAt: reportDateRange },
+        take: 5,
+        orderBy: {
+            amount: "desc"
+        }
+    })
+
+    const topTransactionsPromises = topTransactionsQueryResult.map(async (transaction) => {
+        const category = transaction.categoryId ?
+            await prisma.category.findUnique({
+                where: { id: transaction.categoryId },
+                select: { name: true }
+            }) : "Global Spendings"
+
+        return {
+            amount: transaction.amount,
+            transactionId: transaction.id,
+            categoryName: category,
+            description: transaction.description,
+            date: transaction.createdAt.toISOString()
+        }
+    })
+
+    const topTransactions = await Promise.all(topTransactionsPromises)
+
+    const report = ReportSchema.parse({ id: job.id, year, month, userId, data: {
+        summary, categoriesBreakdown, dailyTrend, topTransactions
+    }})
+
+    await prisma.report.create({
+        data: report
+    })
 }, {
     connection: redis
 })

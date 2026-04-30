@@ -1,12 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it, beforeEach } from "vitest"
 import { admin, emptyUUID, generateAdminToken, server } from "./helpers/helper.js"
-import { closeNotificationsStream, connectNotificationsStream, readNotificationsStream } from "./helpers/notificationsHelper"
-import { authFunctionsBuilder } from "./helpers/authHelper"
-import { userFunctionsBuilder } from "./helpers/usersHelper"
-import { transactionsFunctionsBuilder } from "./helpers/transactionsHelper"
+import { closeNotificationsStream, connectNotificationsStream, readNotificationsStream } from "./helpers/notifications.helper.js"
+import { authFunctionsBuilder } from "./helpers/auth.helper.js"
+import { userFunctionsBuilder } from "./helpers/users.helper.js"
+import { transactionsFunctionsBuilder } from "./helpers/transactions.helper.js"
 import { prisma } from "../lib/prisma"
 import { redis } from "../lib/redis/redis"
-import { categoriesFunctionsBuilder } from "./helpers/categoriesHelper"
+import { categoriesFunctionsBuilder } from "./helpers/categories.helper.js"
 
 let streamReader: ReadableStreamDefaultReader
 

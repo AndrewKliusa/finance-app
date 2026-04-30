@@ -1,8 +1,9 @@
+import z from "zod"
 import { reportQueue } from "../lib/bullmq"
 import { prisma } from "../lib/prisma"
 import { redis } from "../lib/redis/redis"
 import { authenticate } from "../preHandlers/authenticate"
-import { reportQuerySchema, ReportSchema } from "../schemas/report.schema"
+import { reportQuerySchema, ReportResponseSchema, ReportSchema } from "../schemas/report.schema"
 import { ZodServer } from "../types/ZodServer"
 
 export async function reportRoutes(server: ZodServer) {
@@ -11,7 +12,8 @@ export async function reportRoutes(server: ZodServer) {
             tags: ["Report"],
             querystring: reportQuerySchema,
             response: {
-                200: ReportSchema
+                200: ReportResponseSchema,
+                202: z.object({ message: z.string() })
             }
         },
         preHandler: [authenticate]
@@ -26,7 +28,9 @@ export async function reportRoutes(server: ZodServer) {
             return await reply.status(200).send(report)
         }
 
-        const jobId = `report:${request.user.id}:${year}:${month}`
+        const jobId = `report-${request.user.id}-${year}-${month}`
         await reportQueue.add("report", { year, month, userId: request.user.id }, { jobId })
+
+        return await reply.status(202).send({ message: "Report is being generated" })
     })
 }

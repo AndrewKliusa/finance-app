@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "../lib/prisma";
 import { redis } from "../lib/redis/redis";
-import { authFunctionsBuilder } from "./helpers/authHelper";
-import { categoriesFunctionsBuilder } from "./helpers/categoriesHelper";
+import { authFunctionsBuilder } from "./helpers/auth.helper";
+import { categoriesFunctionsBuilder } from "./helpers/categories.helper";
 import { emptyUUID, generateAdminToken, server } from "./helpers/helper.js";
 
 const { create, get, getAll, patch, del } = categoriesFunctionsBuilder(server);
@@ -119,6 +119,14 @@ describe("Categories", () => {
         const delRes = await del(emptyUUID)
 
         expect(delRes.statusCode).toBe(404)
+    })
+
+    it("Creates two categories for one user", async () => {
+        const createRes = await create({ name: "test1234", budget: 100, color: "#000000"})
+        const createResTwo = await create({ name: "test2345", budget: 100, color: "#000000"})
+
+        expect(createRes.statusCode).toBe(201)
+        expect(createResTwo.statusCode).toBe(201)
     })
 })
 
