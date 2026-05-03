@@ -6,7 +6,7 @@ import { FastifyInstance } from 'fastify'
 enviromentSchema.parse(process.env)
 
 const server = buildServer()
-server.listen({ port: 3000 }, (error) => {
+server.listen({ port: 3000, host: '0.0.0.0' }, (error) => {
     if (error) {
         server.log.error(error)
     }

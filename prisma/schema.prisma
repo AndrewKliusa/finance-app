@@ -13,7 +13,7 @@ enum Role {
   ADMIN
 }
 
-enum TranscationType {
+enum TransactionType {
   INCOME
   OUTCOME
 }
@@ -68,7 +68,7 @@ model Category {
 model Transaction {
   id        String  @id @default(uuid()) @db.Uuid
   amount    Int
-  type      TranscationType
+  type      TransactionType
   description String?
   categoryId  String?  @db.Uuid
   category  Category?  @relation(fields: [categoryId], references: [id], onDelete: Cascade)

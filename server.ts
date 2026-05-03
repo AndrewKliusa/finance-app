@@ -40,6 +40,12 @@ export function buildServer() {
         routePrefix: '/api/v1/docs'
     })
 
+    server.register(rateLimit, {
+        global: true,
+        max: 100,
+        timeWindow: '1 minute'
+    })
+
     server.register(userRoutes, { prefix: '/api/v1' })
     server.register(authRoutes, { prefix: '/api/v1' })
     server.register(categoryRoutes, { prefix: '/api/v1' })
@@ -48,11 +54,6 @@ export function buildServer() {
     server.register(notificationsRoutes, { prefix: '/api/v1' })
     server.register(reportRoutes, { prefix: '/api/v1' })
 
-    server.register(rateLimit, {
-        global: true,
-        max: 100,
-        timeWindow: '1 minute'
-    })
     server.register(async () => { await seed() })
 
     server.addHook('onClose', async () => {

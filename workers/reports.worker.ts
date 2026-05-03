@@ -1,5 +1,5 @@
 import { config } from "dotenv"
-config({ path: ".env.test" })
+config({ path: ".env" })
 
 import { Worker } from "bullmq"
 import { ReportJobQuerySchemaType, ReportSchema } from '../schemas/report.schema';

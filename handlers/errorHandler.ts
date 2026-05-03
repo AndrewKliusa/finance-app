@@ -1,6 +1,5 @@
 import { FastifyError, FastifyReply, FastifyRequest } from "fastify"
 import { Prisma } from '../generated/prisma/client'
-import { ZodError } from 'zod'
 
 export function errorHandler(error: FastifyError, _request: FastifyRequest, reply: FastifyReply) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -10,7 +9,7 @@ export function errorHandler(error: FastifyError, _request: FastifyRequest, repl
         } else if (error.code === "P2025") {
             return reply.code(404).send({ message: `Object with this field does not exist!` });
         } else if (error.code === "P2023") {
-            return reply.code(400).send({ message: `Validation error ofone of the fields!` });
+            return reply.code(400).send({ message: `Validation error of one of the fields!` });
         }
     }
 
