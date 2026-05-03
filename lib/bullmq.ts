@@ -6,5 +6,5 @@ export const notificationsQueue = new Queue("notifications", {
 })
 
 export const reportQueue = new Queue("reports", {
-    connection: redis
+    connection: { url: process.env.REDIS_URL }
 })

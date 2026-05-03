@@ -2,9 +2,9 @@ import { config } from "dotenv"
 config({ path: ".env.test" })
 
 import { Worker } from "bullmq"
-import { redis } from "../lib/redis/redis"
 import { ReportJobQuerySchemaType, ReportSchema } from '../schemas/report.schema';
 import { prisma } from "../lib/prisma";
+import { redis } from "../lib/redis/redis";
 
 const worker = new Worker<ReportJobQuerySchemaType, void, "report">("reports", async (job) => {
     const { year, month, userId } = job.data
@@ -61,7 +61,7 @@ const worker = new Worker<ReportJobQuerySchemaType, void, "report">("reports", a
 
     // dailyTrend is written by AI. I was clueless how to implement it, so AI suggested just using
     // plain SQL query, which is a great solution
-    const dailyTrend = await prisma.$queryRaw<
+    const dailyTrendRaw = await prisma.$queryRaw<
         { date: string; income: number; expenses: number }[]
     >`
     SELECT
@@ -69,12 +69,18 @@ const worker = new Worker<ReportJobQuerySchemaType, void, "report">("reports", a
         SUM(CASE WHEN "type" = 'INCOME' THEN "amount" ELSE 0 END) AS income,
         SUM(CASE WHEN "type" = 'OUTCOME' THEN "amount" ELSE 0 END) AS expenses
     FROM "Transaction"
-    WHERE "userId" = ${userId}
+    WHERE "userId" = ${userId}::uuid
         AND "createdAt" >= ${reportDateRange.gte}
         AND "createdAt" < ${reportDateRange.lt}
     GROUP BY date
     ORDER BY date ASC
     `
+
+    const dailyTrend = dailyTrendRaw.map(row => ({
+        date: row.date,
+        income: Number(row.income),
+        expenses: Number(row.expenses)
+    }))
 
     const topTransactionsQueryResult = await prisma.transaction.findMany({
         where: { userId, createdAt: reportDateRange },
@@ -89,12 +95,12 @@ const worker = new Worker<ReportJobQuerySchemaType, void, "report">("reports", a
             await prisma.category.findUnique({
                 where: { id: transaction.categoryId },
                 select: { name: true }
-            }) : "Global Spendings"
+            }) : null
 
         return {
             amount: transaction.amount,
             transactionId: transaction.id,
-            categoryName: category,
+            categoryName: category?.name ?? "Global Spendings",
             description: transaction.description,
             date: transaction.createdAt.toISOString()
         }
@@ -102,7 +108,7 @@ const worker = new Worker<ReportJobQuerySchemaType, void, "report">("reports", a
 
     const topTransactions = await Promise.all(topTransactionsPromises)
 
-    const report = ReportSchema.parse({ id: job.id, year, month, userId, data: {
+    const report = ReportSchema.parse({ year, month, userId, data: {
         summary, categoriesBreakdown, dailyTrend, topTransactions
     }})
 
@@ -114,7 +120,7 @@ const worker = new Worker<ReportJobQuerySchemaType, void, "report">("reports", a
 })
 
 worker.on("ready", () => {
-  console.log("Notification worker is running")
+  console.log("Reports worker is running")
 })
 
 worker.on("completed", (job) => {

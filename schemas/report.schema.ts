@@ -30,9 +30,8 @@ const ReportDataSchema = z.strictObject({
 });
 
 export const ReportSchema = z.object({
-    id: z.string(),
-    year: z.number().max(4).min(4),
-    month: z.number().nullable(),
+    year: z.number().int().min(2026),
+    month: z.number().int().min(1).max(12),
     userId: z.uuid(),
     data: ReportDataSchema
 })

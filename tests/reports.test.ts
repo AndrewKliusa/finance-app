@@ -2,6 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest"
 import { prisma } from "../lib/prisma"
 import { server, generateAdminToken } from "./helpers/helper"
 import { reportsFunctionsBuilder } from "./helpers/reports.helper"
+import { reportQueue } from "../lib/bullmq"
 
 const { requestReport } = reportsFunctionsBuilder(server)
 
@@ -11,7 +12,7 @@ describe("Reports route", () => {
         console.log(repRes.body)
         expect(repRes.statusCode).toBe(202)
 
-        await new Promise(resolve => setTimeout(resolve, 3000))
+        await new Promise(resolve => setTimeout(resolve, 1000))
 
         const repResTwo = await requestReport("2026", (new Date().getMonth() + 1).toString())
         expect(repResTwo.statusCode).toBe(200)
@@ -22,6 +23,7 @@ describe("Reports route", () => {
 beforeAll(async () => {
     await server.ready()
     await generateAdminToken()
+    await reportQueue.obliterate({ force: true })
     await prisma.user.deleteMany({
         where: { name: { not: 'admin' } }
     })
