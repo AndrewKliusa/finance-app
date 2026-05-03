@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import { NotificationsQuerySchemaType } from '../schemas/notifications';
+import { NotificationsQuerySchemaType } from '../schemas/notifications.schema';
 import { verifyNotificationsToken } from "../services/auth.service";
 
 export async function checkNotificationsToken(request: FastifyRequest<{ Querystring: NotificationsQuerySchemaType }>, reply: FastifyReply) {

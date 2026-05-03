@@ -10,7 +10,9 @@
     "test:push": "dotenv -e .env.test -- prisma db push",
     "test:run": "dotenv -e .env.test -- vitest run",
     "test": "npm run test:push && npm run test:run",
-    "workers": "npx concurrently \"npx tsx workers/notifications.worker.ts\" \"npx tsx workers/reports.worker.ts\""
+    "workers": "npx concurrently \"dotenv -e .env -- npx tsx workers/notifications.worker.ts\" \"dotenv -e .env -- npx tsx workers/reports.worker.ts\"",
+    "workers:test": "npx concurrently \"dotenv -e .env.test -- npx tsx workers/notifications.worker.ts\" \"dotenv -e .env.test -- npx tsx workers/reports.worker.ts\""
+
   },
   "keywords": [],
   "author": "",

@@ -91,7 +91,7 @@ export async function transactionRoutes(server: ZodServer) {
                 200: z.void(),
             }
         },
-        preHandler: [authenticate, checkUser]
+        preHandler: [authenticate]
     }, async (request, reply) => {
         const { id } = request.params
 
@@ -100,7 +100,7 @@ export async function transactionRoutes(server: ZodServer) {
 
         const { amount, categoryId, description, tagsId } = request.body
 
-        const category = await prisma.transaction.update({
+        const transactionUpdated = await prisma.transaction.update({
             where: { id },
             data: { amount, categoryId, description, tags: {
                 set: tagsId && tagsId?.map(tagId => ({ id: tagId }))
@@ -111,8 +111,8 @@ export async function transactionRoutes(server: ZodServer) {
             }
         })
 
-        if (category.type === "OUTCOME") {
-            await notificationsQueue.add("budget-check", transaction)
+        if (transactionUpdated.type === "OUTCOME") {
+            await notificationsQueue.add("budget-check", transactionUpdated)
         }
         return reply.status(200).send()
     }),
@@ -125,19 +125,19 @@ export async function transactionRoutes(server: ZodServer) {
                 204: z.void()
             }
         },
-        preHandler: [authenticate, checkUser]
+        preHandler: [authenticate]
     }, async (request, reply) => {
         const { id } = request.params
 
         const transaction = await checkTransactionAccess(reply, request.user.id, id)
         if (!transaction) return;
 
-        const category = await prisma.transaction.delete({
+        const transactionUpdated = await prisma.transaction.delete({
             where: { id }
         })
 
-        if (category.type === "OUTCOME") {
-            await notificationsQueue.add("budget-check", transaction)
+        if (transactionUpdated.type === "OUTCOME") {
+            await notificationsQueue.add("budget-check", transactionUpdated)
         }
 
         return reply.status(204).send()
