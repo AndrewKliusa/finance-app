@@ -4,7 +4,7 @@ import { CategorySchema } from "./category.schema";
 
 export const TransactionSchema = z.object({
     id: z.uuid(),
-    amount: z.number().int().positive(),
+    amount: z.number().int().positive().min(1),
     userId: z.uuid(),
     category: CategorySchema.nullable(),
     tags: z.array(TagSchema).nullable(),

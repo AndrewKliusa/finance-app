@@ -1,12 +1,9 @@
-import { buildServer } from "../server"
-import { GetUsersQueryType, NameAndPasswordType, UserEditType } from '../schemas/user.schema';
-import { RefreshTokenType } from "../schemas/auth.schema";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "../lib/prisma";
 import { redis } from "../lib/redis/redis";
-import { authFunctionsBuilder } from "./helpers/authHelper";
-import { server, adminAccessToken, generateAdminToken } from "./helpers/helper";
-import { userFunctionsBuilder } from "./helpers/usersHelper";
+import { authFunctionsBuilder } from "./helpers/auth.helper";
+import { adminAccessToken, generateAdminToken, server } from "./helpers/helper.js";
+import { userFunctionsBuilder } from "./helpers/users.helper";
 
 const { register, login, refresh, logout, promoteAdmin } = authFunctionsBuilder(server)
 const { del } = userFunctionsBuilder(server)

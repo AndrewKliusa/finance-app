@@ -6,7 +6,7 @@ export const enviromentSchema = z.object({
 
     JWT_ACCESS_SECRET: z.string().min(64),
     JWT_REFRESH_SECRET: z.string().min(64),
-    JWT_CONNECTION_SECRET: z.string().min(64),
+    JWT_NOTIFICATIONS_SECRET: z.string().min(64),
 
     ADMIN_PASSWORD: z.string()
 })

@@ -1,13 +1,13 @@
 import { FastifyInstance } from "fastify"
-import { TransactionCreateSchemaType } from "../../schemas/transaction.schema"
-import { adminAccessToken } from "./helper"
+import { CategoryCreateSchemaType } from "../../schemas/category.schema"
+import { adminAccessToken } from "./helper.js"
 
-export function transactionsFunctionsBuilder(server: FastifyInstance) {
+export function categoriesFunctionsBuilder(server: FastifyInstance) {
     return {
-        async create(data: TransactionCreateSchemaType, token?: string) {
+        async create(data: CategoryCreateSchemaType, token?: string) {
             return await server.inject({
                 method: 'POST',
-                url: `/api/v1/transactions`,
+                url: `/api/v1/categories`,
                 body: data,
                 headers: { authorization: token ? `Bearer ${token}` : `Bearer ${adminAccessToken}` }
             })
@@ -16,7 +16,7 @@ export function transactionsFunctionsBuilder(server: FastifyInstance) {
         async get(indentifier: string, path?: string, token?: string) {
             return await server.inject({
                 method: 'GET',
-                url: `/api/v1/transactions/${indentifier}` + (path ? `/${path}` : ""),
+                url: `/api/v1/categories/${indentifier}` + (path ? `/${path}` : ""),
                 headers: { authorization: token ? `Bearer ${token}` : `Bearer ${adminAccessToken}` }
             })
         },
@@ -24,15 +24,15 @@ export function transactionsFunctionsBuilder(server: FastifyInstance) {
         async getAll(userId: string, token?: string) {
             return await server.inject({
                 method: 'GET',
-                url: `/api/v1/transactions/user/${userId}`,
+                url: `/api/v1/categories/user/${userId}`,
                 headers: { authorization: token ? `Bearer ${token}` : `Bearer ${adminAccessToken}` }
             })
         },
 
-        async patch(identifier: string, payload: TransactionCreateSchemaType, path?: string, token?: string) {
+        async patch(identifier: string, payload: CategoryCreateSchemaType, path?: string, token?: string) {
             return await server.inject({
                 method: 'PATCH',
-                url: `/api/v1/transactions/${identifier}` + (path ? `/${path}` : ""),
+                url: `/api/v1/categories/${identifier}` + (path ? `/${path}` : ""),
                 payload,
                 headers: { authorization: token ? `Bearer ${token}` : `Bearer ${adminAccessToken}` }
             })
@@ -41,7 +41,7 @@ export function transactionsFunctionsBuilder(server: FastifyInstance) {
         async del(identifier: string, path?: string, token?: string) {
             return await server.inject({
                 method: 'DELETE',
-                url: `/api/v1/transactions/${identifier}` + (path ? `/${path}` : ""),
+                url: `/api/v1/categories/${identifier}` + (path ? `/${path}` : ""),
                 headers: { authorization: token ? `Bearer ${token}` : `Bearer ${adminAccessToken}` }
             })
         },

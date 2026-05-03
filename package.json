@@ -10,13 +10,14 @@
     "test:push": "dotenv -e .env.test -- prisma db push",
     "test:run": "dotenv -e .env.test -- vitest run",
     "test": "npm run test:push && npm run test:run",
-    "workers": "npx tsx workers/notifications.worker.ts"
+    "workers": "npx concurrently \"npx tsx workers/notifications.worker.ts\" \"npx tsx workers/reports.worker.ts\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@fastify/cors": "^11.2.0",
     "@fastify/rate-limit": "^10.3.0",
     "@fastify/swagger": "^9.7.0",
     "@fastify/swagger-ui": "^5.2.5",

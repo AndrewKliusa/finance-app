@@ -1,5 +1,4 @@
-import z from "zod"
-import { NotificationsQuerySchema } from "../schemas/notifications"
+import { NotificationsQuerySchema } from "../schemas/notifications.schema"
 import { ZodServer } from "../types/ZodServer"
 import { checkNotificationsToken } from "../preHandlers/checkNotificationsToken"
 import { redis } from "../lib/redis/redis"

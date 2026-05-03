@@ -1,14 +1,13 @@
 import { FastifyInstance } from "fastify"
-import { TagCreateSchemaType } from "../../schemas/tag.schema"
-import { adminAccessToken } from "./helper"
+import { TransactionCreateSchemaType } from "../../schemas/transaction.schema"
+import { adminAccessToken } from "./helper.js"
 
-// Tags functions builder was created by AI, as it is so similar to categories and requires just manualy changing some names.
-export function tagsFunctionsBuilder(server: FastifyInstance) {
+export function transactionsFunctionsBuilder(server: FastifyInstance) {
     return {
-        async create(data: TagCreateSchemaType, token?: string) {
+        async create(data: TransactionCreateSchemaType, token?: string) {
             return await server.inject({
                 method: 'POST',
-                url: `/api/v1/tags`,
+                url: `/api/v1/transactions`,
                 body: data,
                 headers: { authorization: token ? `Bearer ${token}` : `Bearer ${adminAccessToken}` }
             })
@@ -17,7 +16,7 @@ export function tagsFunctionsBuilder(server: FastifyInstance) {
         async get(indentifier: string, path?: string, token?: string) {
             return await server.inject({
                 method: 'GET',
-                url: `/api/v1/tags/${indentifier}` + (path ? `/${path}` : ""),
+                url: `/api/v1/transactions/${indentifier}` + (path ? `/${path}` : ""),
                 headers: { authorization: token ? `Bearer ${token}` : `Bearer ${adminAccessToken}` }
             })
         },
@@ -25,15 +24,15 @@ export function tagsFunctionsBuilder(server: FastifyInstance) {
         async getAll(userId: string, token?: string) {
             return await server.inject({
                 method: 'GET',
-                url: `/api/v1/tags/user/${userId}`,
+                url: `/api/v1/transactions/user/${userId}`,
                 headers: { authorization: token ? `Bearer ${token}` : `Bearer ${adminAccessToken}` }
             })
         },
 
-        async patch(identifier: string, payload: TagCreateSchemaType, path?: string, token?: string) {
+        async patch(identifier: string, payload: TransactionCreateSchemaType, path?: string, token?: string) {
             return await server.inject({
                 method: 'PATCH',
-                url: `/api/v1/tags/${identifier}` + (path ? `/${path}` : ""),
+                url: `/api/v1/transactions/${identifier}` + (path ? `/${path}` : ""),
                 payload,
                 headers: { authorization: token ? `Bearer ${token}` : `Bearer ${adminAccessToken}` }
             })
@@ -42,7 +41,7 @@ export function tagsFunctionsBuilder(server: FastifyInstance) {
         async del(identifier: string, path?: string, token?: string) {
             return await server.inject({
                 method: 'DELETE',
-                url: `/api/v1/tags/${identifier}` + (path ? `/${path}` : ""),
+                url: `/api/v1/transactions/${identifier}` + (path ? `/${path}` : ""),
                 headers: { authorization: token ? `Bearer ${token}` : `Bearer ${adminAccessToken}` }
             })
         },

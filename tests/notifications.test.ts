@@ -1,12 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it, beforeEach } from "vitest"
-import { admin, emptyUUID, generateAdminToken, server } from "./helpers/helper"
-import { closeNotificationsStream, connectNotificationsStream, readNotificationsStream } from "./helpers/notificationsHelper"
-import { authFunctionsBuilder } from "./helpers/authHelper"
-import { userFunctionsBuilder } from "./helpers/usersHelper"
-import { transactionsFunctionsBuilder } from "./helpers/transactionsHelper"
+import { admin, emptyUUID, generateAdminToken, server } from "./helpers/helper.js"
+import { closeNotificationsStream, connectNotificationsStream, readNotificationsStream } from "./helpers/notifications.helper.js"
+import { authFunctionsBuilder } from "./helpers/auth.helper.js"
+import { userFunctionsBuilder } from "./helpers/users.helper.js"
+import { transactionsFunctionsBuilder } from "./helpers/transactions.helper.js"
 import { prisma } from "../lib/prisma"
 import { redis } from "../lib/redis/redis"
-import { categoriesFunctionsBuilder } from "./helpers/categoriesHelper"
+import { categoriesFunctionsBuilder } from "./helpers/categories.helper.js"
 
 let streamReader: ReadableStreamDefaultReader
 
@@ -55,11 +55,11 @@ describe("Notifications", () => {
         await createTransaction({ type: "INCOME", amount: 101, tagsId: [], description: null, categoryId: categoryRes.json().id })
         await createTransaction({ type: "OUTCOME", amount: 50, tagsId: [], description: null, categoryId: categoryRes.json().id })
         
-        expect(readNotificationsStream(streamReader)).rejects.toThrow("Timed out!")
+        await expect(readNotificationsStream(streamReader)).rejects.toThrow("Timed out!")
     })
 
     it("Tries to start a notifications stream with a wrong token", async () => {
-        expect(connectNotificationsStream("a".repeat(64))).rejects.toThrow("401")
+        await expect(connectNotificationsStream("a".repeat(64))).rejects.toThrow("401")
     })
 })
 

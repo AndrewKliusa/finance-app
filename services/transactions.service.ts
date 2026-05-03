@@ -1,8 +1,6 @@
 import { FastifyReply } from "fastify";
 import { prisma } from "../lib/prisma";
 import { isAdmin } from "./users.service";
-import { TransactionSchemaType } from "../schemas/transaction.schema";
-import { notificationsQueue } from "../lib/bullmq";
 
 export async function getTransaction(transactionId: string) {
     return await prisma.transaction.findUnique({
