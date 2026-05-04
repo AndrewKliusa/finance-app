@@ -11,8 +11,10 @@
     "test:run": "dotenv -e .env.test -- vitest run",
     "test": "npm run test:push && npm run test:run",
     "workers": "npx concurrently \"dotenv -e .env -- npx tsx workers/notifications.worker.ts\" \"dotenv -e .env -- npx tsx workers/reports.worker.ts\"",
-    "workers:test": "npx concurrently \"dotenv -e .env.test -- npx tsx workers/notifications.worker.ts\" \"dotenv -e .env.test -- npx tsx workers/reports.worker.ts\""
-
+    "workers:test": "npx concurrently \"dotenv -e .env.test -- npx tsx workers/notifications.worker.ts\" \"dotenv -e .env.test -- npx tsx workers/reports.worker.ts\"",
+    "start": "tsx main.ts",
+    "start:workers": "concurrently \"tsx workers/notifications.worker.ts\" \"tsx workers/reports.worker.ts\"",
+    "migrate:deploy": "prisma migrate deploy"
   },
   "keywords": [],
   "author": "",
@@ -31,6 +33,8 @@
     "fastify-type-provider-zod": "^6.1.0",
     "ioredis": "^5.10.1",
     "jose": "^6.2.2",
+    "tsx": "^4.19.2",
+    "concurrently": "^9.1.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

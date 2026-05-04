@@ -15,6 +15,8 @@ import { transactionRoutes } from './routes/transations.route'
 import { notificationsRoutes } from './routes/notifications.route'
 import cors from '@fastify/cors'
 import { reportRoutes } from './routes/reports.route'
+import z from 'zod'
+import { enviromentSchema } from './schemas/env.schema'
 
 export function buildServer() {
     const server = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>()
@@ -23,9 +25,8 @@ export function buildServer() {
     server.setSerializerCompiler(serializerCompiler)
     server.setErrorHandler(errorHandler);
 
-    server.register(cors, {
-        origin: "*"
-    })
+    const env = enviromentSchema.parse(process.env)
+    server.register(cors, { origin: env.CORS_ORIGIN })
 
     server.register(swagger, {
         openapi: {
@@ -45,6 +46,13 @@ export function buildServer() {
         max: 100,
         timeWindow: '1 minute'
     })
+
+    server.get("/api/v1/health", {
+        schema: {
+            tags: ["Health"],
+            response: { 200: z.object({ status: z.literal("ok") }) }
+        }
+    }, async () => ({ status: "ok" as const }))
 
     server.register(userRoutes, { prefix: '/api/v1' })
     server.register(authRoutes, { prefix: '/api/v1' })

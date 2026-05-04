@@ -1,12 +1,11 @@
 import 'dotenv/config'
 import { buildServer } from './server'
 import { enviromentSchema } from './schemas/env.schema'
-import { FastifyInstance } from 'fastify'
 
-enviromentSchema.parse(process.env)
+const env = enviromentSchema.parse(process.env)
 
 const server = buildServer()
-server.listen({ port: 3000, host: '0.0.0.0' }, (error) => {
+server.listen({ port: env.PORT, host: env.HOST }, (error) => {
     if (error) {
         server.log.error(error)
     }
