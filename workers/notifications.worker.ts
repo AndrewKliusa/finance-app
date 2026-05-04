@@ -1,6 +1,3 @@
-import { config } from "dotenv"
-config({ path: ".env" })
-
 import { Worker } from "bullmq"
 import { redis } from "../lib/redis/redis"
 import { TransactionSchemaType } from "../schemas/transaction.schema"

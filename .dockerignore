@@ -1,0 +1,13 @@
+node_modules
+.git
+.gitignore
+.env
+.env.test
+.vscode
+.claude
+.idea
+generated
+tests
+*.md
+Dockerfile
+.dockerignore
