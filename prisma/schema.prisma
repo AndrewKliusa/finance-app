@@ -8,9 +8,82 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
+enum TransactionType {
+  INCOME
+  OUTCOME
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid()) @db.Uuid
   password  String
-  name  String
+  name      String   @unique
+  createdAt DateTime @default(now())
+  refreshTokens RefreshToken[]
+  role      Role     @default(USER)
+  categories   Category[]
+  tags         Tag[]
+  transactions Transaction[]
+  reports   Report[]
+  globalLimit Int?   @default(0)
+}
+
+model RefreshToken {
+  id        String  @id @default(uuid()) @db.Uuid
+  token     String  @unique
+  userId    String  @db.Uuid
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Tag {
+  id        String  @id @default(uuid()) @db.Uuid
+  name      String
+  userId    String  @db.Uuid
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  createdAt DateTime @default(now())
+
+  @@unique([userId, name])
+}
+
+model Category {
+  id        String  @id @default(uuid()) @db.Uuid
+  name      String
+  color     String
+  budget    Int
+  userId    String  @db.Uuid
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  createdAt DateTime @default(now())
+
+  @@unique([userId, name])
+}
+
+model Transaction {
+  id        String  @id @default(uuid()) @db.Uuid
+  amount    Int
+  type      TransactionType
+  description String?
+  categoryId  String?  @db.Uuid
+  category  Category?  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  userId    String  @db.Uuid
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags      Tag[]
+  createdAt DateTime @default(now())
+}
+
+model Report {
+  id        String  @id @default(uuid()) @db.Uuid
+  year      Int
+  month     Int
+  userId    String  @db.Uuid
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  data      Json
   createdAt DateTime @default(now())
 }
