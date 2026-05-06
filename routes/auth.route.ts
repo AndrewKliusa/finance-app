@@ -1,7 +1,7 @@
 import z from "zod";
 import { prisma } from "../lib/prisma";
 import { AccessAndRefreshTokenSchema, AuthResponseSchema, RefreshTokenSchema } from "../schemas/auth.schema";
-import { NameAndPasswordSchema, UserResponseSchema } from "../schemas/user.schema";
+import { NameAndPasswordSchema, UserResponseSchema } from '../schemas/user.schema';
 import { generateTokenPair, revokeRefreshToken, rotateRefreshToken } from "../services/auth.service";
 import { ZodServer } from "../types/ZodServer";
 import argon2 from 'argon2'

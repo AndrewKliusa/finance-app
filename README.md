@@ -1,18 +1,27 @@
 # Finance Tracker API
-#### This project was made to illustrate my programming skills, as I am too young to have any real experience yet.
 
-Finance tracker API is a backend for an application that track your finances. It handles the following features:
-- Storing your transactions inside a database.
-- Categorizing them using categories and tags.
-- Setting budgets for your total expenses or individual categories.
-- Generating information reports on your transactions using a background worker.
-- Recieving notifications for events like exceeding budget or finishing report generation via an SSE event stream and a backgroud worker.
-- JWT Authentification using access and refresh token.
+#### Finance tracker API is a backend for an application that track your finances. <br>This project was made to illustrate my programming skills, as I am too young to have any real experience yet.
+
+
+## Features
+- Stores your transactions inside a database.
+- Categorizes them using categories and tags.
+- Sets up budgets for your total expenses or individual categories.
+- Generates information reports on your transactions.
+- Sends notifications for events like exceeding budget or finishing a report.
+
+## Technical features
+- JWT Authentication using access and refresh tokens.
 - Caching using in-memory data store.
-- Containarization and deployment to the cloud.
-- Thoroughly automated testing with 152 tests.
+- Background workers for report generation and notifications.
+- SSE Event stream for notifications.
+- Type safety and request/response validation with zod schemas.
+- Containerization and deployment to the cloud.
+- Thorough testing using 152 integration tests.
 
-# Tech Stack
+Swagger UI documentation: https://finance-api-3yl5.onrender.com/api/v1/docs
+
+## Tech Stack
 
 The tech stack for this project is:
 - Database: **Postgres** (Prisma ORM)
@@ -23,22 +32,23 @@ The tech stack for this project is:
 - Authentication: **JWT** (jose)
 - Infrastructure: **Docker**
 - Deployment: **Render + Upstash**
+- Testing: **Vitest**
 
-# Authentication
-
-I used JWT to generate access and refresh tokens for every user.
+## Authentication
 
 | Method | Path                       | Auth             | Description                                          |
 | ------ | -------------------------- | ---------------- | ---------------------------------------------------- |
-| POST   | `/auth/register`           | —                | Create a new user, return access + refresh tokens    |
-| POST   | `/auth/login`              | —                | Verify credentials, return access + refresh tokens   |
+| POST   | `/auth/register`           | ---                | Create a new user, return access + refresh tokens    |
+| POST   | `/auth/login`              | ---                | Verify credentials, return access + refresh tokens   |
 | POST   | `/auth/refresh`            | refresh          | Rotate refresh token, return a new token pair        |
 | POST   | `/auth/logout`             | refresh          | Revoke the given refresh token                       |
 | POST   | `/auth/promote-admin/:id`  | access + admin   | Promote another user to `ADMIN` role                 |
 
-Access token - expires in 15 minutes. Used to gain access to the API. It is required in authorization header with every request, and gets checked against a token secret to verify it. Access token is stateless, so it is not stored anywhere on the server, this eliminates a need for a DB-look up on every request.
+I used **JWT** to generate access and refresh tokens for every user.
 
-Refresh token - expires in 30 days. Used to get a new access token. It is stored in postgres and is mirrored to redis for faster look-ups. It is generated on registration/login and gets revoked on logout.
+**Access token** - expires in 15 minutes. Used to gain access to the API. It is required in authorization header with every request, and gets checked against a token secret to verify it. Access token is stateless, so it is not stored anywhere on the server, this eliminates a need for a DB-look up on every request.
+
+**Refresh token** - expires in 30 days. Used to get a new access token. It is stored in postgres and is mirrored to redis for faster look-ups. It is generated on registration/login and gets revoked on logout.
 
 There are also admin users, that can edit any other user in the system. From the start, seed generates one admin user, that can later promote other users to admins.
 
@@ -55,7 +65,7 @@ flowchart TB
     E -- No / expired --> G["POST /auth/refresh<br/>with refresh token"]
 
     G --> H{"Refresh token valid?<br/>(exists in store + signature ok)"}
-    H -- No --> I["401 — force re-login"]
+    H -- No --> I["401 - force re-login"]
     H -- Yes --> J["Rotate: revoke old refresh,<br/>issue new access + refresh pair"]
     J --> D
 
@@ -66,7 +76,7 @@ flowchart TB
     style F fill:#efe
 ```
 
-# Users
+## Users
 
 | Method | Path                  | Auth                | Description                                                |
 | ------ | --------------------- | ------------------- | ---------------------------------------------------------- |
@@ -78,6 +88,7 @@ flowchart TB
 
 User routes consist of CRUD operations, that are safe guarded by authentication pre-handler, that validates user refresh token. All users are stored to prisma and are cached to redis using read-through cache with TTL and write-through invalidation on mutations.
 
+(routes\users.route.ts:44-73)
 ```ts
 server.get("/users/:id", {
     ...
@@ -119,18 +130,114 @@ This is how user schema looks:
 
 ```prisma
 model User {
-  id        String   @id @default(uuid()) @db.Uuid
-  password  String
-  name      String   @unique
-  createdAt DateTime @default(now())
-  refreshTokens RefreshToken[]
-  role      Role     @default(USER)
-  categories   Category[]
-  tags         Tag[]
-  transactions Transaction[]
-  reports   Report[]
-  globalLimit Int?   @default(0)
+    id            String         @id @default(uuid()) @db.Uuid
+    password      String         /// Hashed with Argon2 (salt included)
+    name          String         @unique
+    role          Role           @default(USER) /// USER or ADMIN
+    globalLimit   Int?           @default(0)    /// Spending cap across all categories
+    createdAt     DateTime       @default(now())
+    refreshTokens RefreshToken[] /// One per active session, supports multi-device login
+    categories    Category[]
+    tags          Tag[]
+    transactions  Transaction[]
+    reports       Report[]
 }
 ```
 
-Global limit is a budget that applies to every single transaction, regardless of it's category, so if all category spendings combined exceed global budget, user will recieve a notification.
+## Categories and tags
+
+| Method | Path                                                  | Auth                | Description                                                       |
+| ------ | ----------------------------------------------------- | ------------------- | ----------------------------------------------------------------- |
+| POST   | `/categories` &nbsp;·&nbsp; `/tags`                   | access              | Create a category/tag for the current user, write to cache        |
+| GET    | `/categories/:id` &nbsp;·&nbsp; `/tags/:id`           | access + owner      | Get a single category/tag by id                                   |
+| GET    | `/categories/user/:id` &nbsp;·&nbsp; `/tags/user/:id` | access + self/admin | List all categories/tags for a user, served from cache when warm  |
+| PATCH  | `/categories/:id` &nbsp;·&nbsp; `/tags/:id`           | access + owner      | Edit a category/tag, refresh its cache entry                      |
+| DELETE | `/categories/:id` &nbsp;·&nbsp; `/tags/:id`           | access + owner      | Delete a category/tag, remove from cache                          |
+
+Every transaction can be assigned to one category and any number of tags. For example: a $20 transaction in category "Food" with tags "Restaurant" and "Bought for a friend".
+
+### Budgets
+Each category has a **budget**, which is basically a spending limit. When user's spending in that category exceeds the limit, they get a notification. There is also a **global budget** that applies across all transactions (including ones with no category), and works the same way.
+
+### Caching
+Categories and tags use a different cache layout from users. Each record is stored as a Redis **hash** under `category:{id}` or `tag:{id}`, and the ids of records owned by a user are tracked in a Redis **set** under `user:{userId}:categories`.
+
+This lets us:
+- Look up a single record in O(1): `HGETALL category:{id}`
+- Read or update one field without rewriting the rest: `HGET category:{id} name`
+- List all of a user's records in one set read plus N parallel hash reads, instead of scanning Redis
+
+Mutations are write-through, the cache is updated alongside Postgres on every change, so there is no TTL.
+
+## Transactions
+
+| Method | Path                       | Auth                | Description                                                       |
+| ------ | -------------------------- | ------------------- | ----------------------------------------------------------------- |
+| POST   | `/transactions`            | access              | Create a transaction, fires a budget-check job if it's an OUTCOME |
+| GET    | `/transactions/:id`        | access + owner      | Get a single transaction by id                                    |
+| GET    | `/transactions/user/:id`   | access + self/admin | List all transactions for a user (204 if empty)                   |
+| PATCH  | `/transactions/:id`        | access + owner      | Edit a transaction, re-fires the budget-check job for OUTCOMEs    |
+| DELETE | `/transactions/:id`        | access + owner      | Delete a transaction, re-fires the budget-check job for OUTCOMEs  |
+
+Each transaction has an amount, a type (`INCOME` or `OUTCOME`), an optional description, optional category and any number of tags. Amounts are stored as integers (in cents) to avoid floating-point precision issues with money. Categories and tags are optional on purpose, such transactions fall under user's global budget.
+
+```prisma
+model Transaction {
+  id          String          @id @default(uuid()) @db.Uuid
+  amount      Int
+  type        TransactionType
+  description String?
+  userId      String          @db.Uuid
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId  String?         @db.Uuid
+  category    Category?       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  tags        Tag[]
+  createdAt   DateTime        @default(now())
+}
+```
+
+## Reports
+
+| Method | Path                          | Auth   | Description                                                  |
+| ------ | ----------------------------- | ------ | ------------------------------------------------------------ |
+| GET    | `/report?year=YYYY&month=MM`  | access | Returns the report if it exists (200), else queues it (202)  |
+
+Reports are generated by a BullMQ worker that runs independently from the API. The first call to `/report` for a given month returns `202 Report is being generated` and queues a job. The worker runs a few prisma aggregations (plus a raw SQL daily-trend query) and writes the finished report to Postgres. The next call returns `200` with the data.
+
+Each report contains:
+- **Summary** - total income, total expenses, net, transaction count.
+- **Categories breakdown** - per-category total spent, transaction count, budget, and an `isOverBudget` flag.
+- **Daily trend** - per-day income vs expenses for the month.
+- **Top transactions** - the 5 largest transactions of the month.
+
+Job ids are deterministic (`report-{userId}-{year}-{month}`), so spamming the endpoint while a job is in flight doesn't queue duplicates, BullMQ deduplicates by `jobId`.
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant API as API
+    participant DB as Postgres
+    participant Q as BullMQ
+    participant W as Reports worker
+
+    C->>API: GET /report?year=2026&month=5
+    API->>DB: findFirst report
+    alt report exists
+        DB-->>API: report row
+        API-->>C: 200 + report data
+    else not yet generated
+        DB-->>API: null
+        API->>Q: enqueue job<br/>(jobId = report-{userId}-{year}-{month})
+        Note over Q: dedupes if same jobId<br/>is already queued
+        API-->>C: 202 Report is being generated
+        Q->>W: deliver job
+        W->>DB: aggregate transactions<br/>(summary, breakdown, trend, top 5)
+        W->>DB: prisma.report.create
+    end
+
+    Note over C,API: Client polls /report later
+    C->>API: GET /report?year=2026&month=5
+    API->>DB: findFirst report
+    DB-->>API: report row
+    API-->>C: 200 + report data
+```

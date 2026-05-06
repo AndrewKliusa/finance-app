@@ -59,7 +59,7 @@ export async function userRoutes(server: ZodServer) {
         if (cachedUser) {
             return reply.code(200).send(JSON.parse(cachedUser))
         }
-
+        
         const user = await prisma.user.findUnique({
             where: { id },
             omit: { password: true }
