@@ -213,31 +213,19 @@ Each report contains:
 Job ids are deterministic (`report-{userId}-{year}-{month}`), so spamming the endpoint while a job is in flight doesn't queue duplicates, BullMQ deduplicates by `jobId`.
 
 ```mermaid
-sequenceDiagram
-    participant C as Client
-    participant API as API
-    participant DB as Postgres
-    participant Q as BullMQ
-    participant W as Reports worker
+flowchart TB
+    A["Client: GET /report?year=Y&month=M"] --> B{"Report exists<br/>in Postgres?"}
+    B -- Yes --> C["200 + report data"]
+    B -- No --> D["Enqueue BullMQ job<br/>(jobId = report-{userId}-{year}-{month})"]
+    D --> E["202 Report is being generated"]
+    D -.-> F["Reports worker picks up job"]
+    F --> G["Aggregate transactions<br/>(summary, breakdown, trend, top 5)"]
+    G --> H["Save report to Postgres"]
+    H -.-> A
 
-    C->>API: GET /report?year=2026&month=5
-    API->>DB: findFirst report
-    alt report exists
-        DB-->>API: report row
-        API-->>C: 200 + report data
-    else not yet generated
-        DB-->>API: null
-        API->>Q: enqueue job<br/>(jobId = report-{userId}-{year}-{month})
-        Note over Q: dedupes if same jobId<br/>is already queued
-        API-->>C: 202 Report is being generated
-        Q->>W: deliver job
-        W->>DB: aggregate transactions<br/>(summary, breakdown, trend, top 5)
-        W->>DB: prisma.report.create
-    end
-
-    Note over C,API: Client polls /report later
-    C->>API: GET /report?year=2026&month=5
-    API->>DB: findFirst report
-    DB-->>API: report row
-    API-->>C: 200 + report data
+    style C fill:#efe
+    style E fill:#ffe
+    style H fill:#eef
 ```
+
+The dashed arrow back to the client shows what happens *next time* they hit `/report`, the worker has finished, the report exists, the call goes down the green path.
