@@ -2,6 +2,20 @@
 
 #### Finance tracker API is a backend for an application that track your finances. <br>This project was made to illustrate my programming skills, as I am too young to have any real experience yet.
 
+## Contents
+- [Features](#features)
+- [Technical features](#technical-features)
+- [Tech Stack](#tech-stack)
+- [Running the project](#running-the-project)
+- [Authentication](#authentication)
+- [Users](#users)
+- [Categories and tags](#categories-and-tags)
+- [Transactions](#transactions)
+- [Reports](#reports)
+- [Notifications](#notifications)
+- [Deployment and Infrastructure](#deployment-and-infrastructure)
+- [Testing](#testing)
+
 ## Features
 - Stores your transactions inside a database.
 - Categorizes them using categories and tags.
@@ -34,9 +48,6 @@ The tech stack for this project is:
 - Testing: **Vitest**
 
 ## Running the project
-
-> Requires **Node 22+**, **Docker**, and **git**.
-
 **1. Clone and install**
 ```sh
 git clone https://github.com/AndrewKliusa/finance-app
@@ -337,10 +348,10 @@ flowchart LR
     style H fill:#efe
 ```
 
-## Deployment and infrastructure
+## Deployment and Infrastructure
 I used docker to spin up three containers with:
 
-- **Postgres Dev** - main database, persisted in a docker volume so data survives res tarts.
+- **Postgres Dev** - main database, persisted in a docker volume so data survives restarts.
 - **Postgres Test** - used only by the test suite, not persisted, so every test run starts clean.
 - **Redis** - used for caching and pub/sub. 
 
@@ -352,4 +363,36 @@ Workers run as separate Render services, not inside the API container. That way 
 report-generation job doesn't slow down request handling, and either side can be scaled
 independently.
 
-The Dockerfile uses a **multi-stage build**. The build stage installs all dependencies and runs `prisma generate`, then the runtime stage copies over only what's needed to run, no dev dependencies. Final image is much smaller and ships less. 
+The Dockerfile uses a **multi-stage build**. The build stage installs all dependencies and runs `prisma generate`, then the runtime stage copies over only what's needed to run, no dev dependencies. Final image is much smaller and ships less.
+
+## Testing
+Project uses Vitest's integration tests. With a simple `server.inject(request)`, it feeds request directly into fastify request pipeline, without binding a socket.
+
+In `tests/helpers` directory live helpers, which are factories for every route's test methods. Example:
+tests/helpers/auth.helper.ts:5-14
+```ts
+export function authFunctionsBuilder(server: FastifyInstance) {
+    return {
+       async register(payload: NameAndPasswordType) {
+            return server.inject({
+                method: 'POST',
+                url: '/api/v1/auth/register',
+                payload
+            })
+        },
+    }
+}
+```
+
+In tests/*.test.ts are the test files themselves. They use the factory methods declared earlier to get access to any route's CRUD.
+
+```ts 
+const { register } = authFunctionsBuilder(server)
+
+it("Logins with invalid credentials", async () => {
+    await register({ name: "andrew1234", password: "test1234" })
+    const loginRes = await login({ name: "wrong_name", password: "wrong_password" })
+
+    expect(loginRes.statusCode).toBe(401)
+})
+```
