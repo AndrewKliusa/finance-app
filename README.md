@@ -235,13 +235,33 @@ The dashed arrow back to the client shows what happens *next time* they hit `/re
 | ------ | ------------------------------------ | ------------------- | -------------------------------------------- |
 | GET    | `/notifications/stream?token=...`    | notifications token | Open SSE stream for the current user         |
 
-Notifications are implemented via an SSE event stream. User recieves them on:
+Notifications are implemented via an SSE event stream. User recieves them:
 - When finance report finished generating.
 - When user exceeds category budget.
 
 Notifications route accepts a **separate token**, that user gets on `auth/refreshTokens` route. The browser SSE client doesn't let you set Authorization header, so there is no way to set an access token, and passing it in the query string is too dangerous. So, instead it uses a token that is only scoped to notifications access and nothing else.
 
-Communication with BullMQ worker is different from reports. Notifications use **redis pub/sub** - first worker checks if incoming transaction exceeds the budget and then publishes notification text to `notifications:{userId}`, and then sub picks it up in the route logic and sends it.
+Communication with BullMQ worker is different from reports. Notifications use **redis pub/sub** - first worker checks if incoming transaction exceeds the budget, then publishes notification text to `notifications:{userId}`, and then sub picks it up in the route logic and sends it.
+
+Send a notification (services/notifications.service:4-11)
+```ts
+export async function sendNotification(userId: string, message: string) {
+    await redis.publish(`notifications:${userId}`,
+        JSON.stringify({
+            type: "BUDGET_EXCEEDED",
+            payload: message
+        })
+    );
+}
+```
+
+Handle a notification (routes/notifications.route.ts:25-28)
+```ts
+await sub.subscribe(`notifications:${request.user.id}`)
+sub.on("message", (_, message) => {
+    reply.raw.write(`data: ${message}\n\n`)
+})
+```
 
 ```mermaid
 flowchart LR
