@@ -229,3 +229,30 @@ flowchart TB
 ```
 
 The dashed arrow back to the client shows what happens *next time* they hit `/report`, the worker has finished, the report exists, the call goes down the green path.
+
+## Notifications
+| Method | Path                                 | Auth                | Description                                  |
+| ------ | ------------------------------------ | ------------------- | -------------------------------------------- |
+| GET    | `/notifications/stream?token=...`    | notifications token | Open SSE stream for the current user         |
+
+Notifications are implemented via an SSE event stream. User recieves them on:
+- When finance report finished generating.
+- When user exceeds category budget.
+
+Notifications route accepts a **separate token**, that user gets on `auth/refreshTokens` route. The browser SSE client doesn't let you set Authorization header, so there is no way to set an access token, and passing it in the query string is too dangerous. So, instead it uses a token that is only scoped to notifications access and nothing else.
+
+Communication with BullMQ worker is different from reports. Notifications use **redis pub/sub** - first worker checks if incoming transaction exceeds the budget and then publishes notification text to `notifications:{userId}`, and then sub picks it up in the route logic and sends it.
+
+```mermaid
+flowchart LR
+    A["Transaction (OUTCOME)"] --> B["Notifications queue"]
+    B --> C["Worker aggregates spend"]
+    C --> D{"Over budget?"}
+    D -- No --> E["Done"]
+    D -- Yes --> F["PUBLISH notifications:{userId}"]
+    F --> G["SSE handler<br/>(subscribed to channel)"]
+    G --> H["Client receives event"]
+
+    style E fill:#eef
+    style H fill:#efe
+```
