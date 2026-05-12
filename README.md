@@ -13,8 +13,8 @@
 - [Transactions](#transactions)
 - [Reports](#reports)
 - [Notifications](#notifications)
-- [Deployment and Infrastructure](#deployment-and-infrastructure)
-- [Testing](#testing)
+- [Deployment](#deployment)
+- [Testing and type validation (Zod)](#testing-and-type-validation-zod)
 
 ## Features
 - Stores your transactions inside a database.
@@ -159,7 +159,7 @@ flowchart TB
 
 User routes consist of CRUD operations, that are safe guarded by authentication pre-handler, that validates user refresh token. All users are stored to prisma and are cached to redis using read-through cache with TTL and write-through invalidation on mutations.
 
-(routes\users.route.ts:44-73)
+(`routes\users.route.ts:44-73`)
 ```ts
 server.get("/users/:id", {
     ...
@@ -314,7 +314,7 @@ Notifications route accepts a **separate token**, that user gets on `auth/refres
 
 Communication with BullMQ worker is different from reports. Notifications use **redis pub/sub** - first worker checks if incoming transaction exceeds the budget, then publishes notification text to `notifications:{userId}`, and then sub picks it up in the route logic and sends it.
 
-Send a notification (services/notifications.service.ts:4-11)
+Send a notification (`services/notifications.service.ts:4-11`)
 ```ts
 export async function sendNotification(userId: string, message: string) {
     await redis.publish(`notifications:${userId}`,
@@ -326,7 +326,7 @@ export async function sendNotification(userId: string, message: string) {
 }
 ```
 
-Handle a notification (routes/notifications.route.ts:25-28)
+Handle a notification (`routes/notifications.route.ts:25-28`)
 ```ts
 await sub.subscribe(`notifications:${request.user.id}`)
 sub.on("message", (_, message) => {
@@ -348,7 +348,7 @@ flowchart LR
     style H fill:#efe
 ```
 
-## Deployment and Infrastructure
+## Deployment
 I used docker to spin up three containers with:
 
 - **Postgres Dev** - main database, persisted in a docker volume so data survives restarts.
@@ -365,11 +365,11 @@ independently.
 
 The Dockerfile uses a **multi-stage build**. The build stage installs all dependencies and runs `prisma generate`, then the runtime stage copies over only what's needed to run, no dev dependencies. Final image is much smaller and ships less.
 
-## Testing
+## Testing and type validation (Zod)
 Project uses Vitest's integration tests. With a simple `server.inject(request)`, it feeds request directly into fastify request pipeline, without binding a socket.
 
-In `tests/helpers` directory live helpers, which are factories for every route's test methods. Example:
-tests/helpers/auth.helper.ts:5-14
+In `tests/helpers` directory are helpers, which are factories for every route's test methods. Example:
+`tests/helpers/auth.helper.ts:5-14`
 ```ts
 export function authFunctionsBuilder(server: FastifyInstance) {
     return {
@@ -384,7 +384,7 @@ export function authFunctionsBuilder(server: FastifyInstance) {
 }
 ```
 
-In tests/*.test.ts are the test files themselves. They use the factory methods declared earlier to get access to any route's CRUD.
+In `tests/*.test.ts` are the test files themselves. They use the factory methods declared earlier to get access to any route's CRUD.
 
 ```ts 
 const { register } = authFunctionsBuilder(server)
@@ -395,4 +395,27 @@ it("Logins with invalid credentials", async () => {
 
     expect(loginRes.statusCode).toBe(401)
 })
+```
+With the only exception being notification tests, which require opening an SSE Event stream and keeping it open.
+In total, there are 7 test files, that cover all aspects of the projects with tests, totalling 152 tests. Some test are written with AI and are specifically marked as so on top of them.
+
+### Type validation (Zod)
+Project uses **Zod** for runtime type validation. It is used to check the correntness of request bodies, queries, parameters and responses. They live in `schemas` folder.
+Exaple `schemas/tag.schema.ts:3-13`:
+```ts
+// General schema of what tag data should be
+export const TagSchema = z.object({
+    id: z.uuid(),
+    name: z.string().trim().max(64),
+    userId: z.uuid()
+})
+
+// Used in a body of (POST) /tags
+export const TagCreateSchema = TagSchema.pick({ name: true })
+// Used as a response for (GET) /tags/:id
+export const TagResponseSchema = TagSchema.omit({ userId: true })
+
+// Types to allow typescript typing and autocomplete
+export type TagCreateSchemaType = z.infer<typeof TagCreateSchema>
+export type TagSchemaType = z.infer<typeof TagSchema>
 ```
