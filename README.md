@@ -2,7 +2,6 @@
 
 #### Finance tracker API is a backend for an application that track your finances. <br>This project was made to illustrate my programming skills, as I am too young to have any real experience yet.
 
-
 ## Features
 - Stores your transactions inside a database.
 - Categorizes them using categories and tags.
@@ -33,6 +32,81 @@ The tech stack for this project is:
 - Infrastructure: **Docker**
 - Deployment: **Render + Upstash**
 - Testing: **Vitest**
+
+## Running the project
+
+> Requires **Node 22+**, **Docker**, and **git**.
+
+**1. Clone and install**
+```sh
+git clone https://github.com/AndrewKliusa/finance-app
+cd Petproject
+npm install
+```
+
+**2. Start Postgres and Redis containers**
+```sh
+docker compose up -d
+```
+This will run:
+- Postgres on `localhost:5432` (dev DB)
+- Postgres on `localhost:5433` (test DB)
+- Redis on `localhost:6379`
+
+**3. Create `.env` and `.env.test` files** in the project root.
+
+<details>
+<summary>Environment file shape</summary>
+
+```ini
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/finance_tracker
+REDIS_URL=redis://localhost:6379
+JWT_ACCESS_SECRET=<64+ character random string>
+JWT_REFRESH_SECRET=<64+ character random string>
+JWT_NOTIFICATIONS_SECRET=<64+ character random string>
+ADMIN_PASSWORD=<seed admin password>
+PORT=3000
+HOST=0.0.0.0
+CORS_ORIGIN=*
+```
+</details>
+
+<details>
+<summary>Test environment file shape</summary>
+
+```ini
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/finance_tracker_test
+REDIS_URL=redis://localhost:6379
+JWT_ACCESS_SECRET=<64+ character random string>
+JWT_REFRESH_SECRET=<64+ character random string>
+JWT_NOTIFICATIONS_SECRET=<64+ character random string>
+ADMIN_PASSWORD=test
+PORT=3001
+HOST=0.0.0.0
+CORS_ORIGIN=*
+```
+</details>
+
+**4. Sync the database schema**
+```sh
+npm run dev:push
+```
+
+**5. Run the API and workers** in two separate terminals:
+```sh
+npm run dev
+```
+```sh
+npm run workers
+```
+
+The API will be live on `http://localhost:3000`, and Swagger UI is at `http://localhost:3000/api/v1/docs`.
+
+### Running tests
+```sh
+npm test            # pushes test schema and runs all 152 integration tests
+npm run workers:test # in a second terminal, runs workers against the test DB
+```
 
 ## Authentication
 
@@ -243,7 +317,7 @@ Notifications route accepts a **separate token**, that user gets on `auth/refres
 
 Communication with BullMQ worker is different from reports. Notifications use **redis pub/sub** - first worker checks if incoming transaction exceeds the budget, then publishes notification text to `notifications:{userId}`, and then sub picks it up in the route logic and sends it.
 
-Send a notification (services/notifications.service:4-11)
+Send a notification (services/notifications.service.ts:4-11)
 ```ts
 export async function sendNotification(userId: string, message: string) {
     await redis.publish(`notifications:${userId}`,
@@ -276,3 +350,5 @@ flowchart LR
     style E fill:#eef
     style H fill:#efe
 ```
+
+## Deployment
