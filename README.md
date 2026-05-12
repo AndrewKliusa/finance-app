@@ -40,7 +40,7 @@ The tech stack for this project is:
 **1. Clone and install**
 ```sh
 git clone https://github.com/AndrewKliusa/finance-app
-cd Petproject
+cd finance-app
 npm install
 ```
 
@@ -48,7 +48,7 @@ npm install
 ```sh
 npm run setup
 ```
-This runs `setup.ts`, which writes both env files with freshly generated JWT secrets. Skipped automatically for any file that already exists.
+This runs `setup.ts`, which writes both env files with freshly generated JWT secrets.
 
 <details>
 <summary>Generated environment file shape</summary>
@@ -92,7 +92,7 @@ The API will be live on `http://localhost:3000`, and Swagger UI is at `http://lo
 ```sh
 npm test
 ```
-Pushes the schema to the test DB, runs all 152 integration tests, and spins up workers against the test DB in parallel. Exits when the test run finishes.
+Pushes the schema to the test DB, runs all 152 integration tests, and spins up workers against the test DB in parallel.
 
 ## Authentication
 
@@ -337,4 +337,17 @@ flowchart LR
     style H fill:#efe
 ```
 
-## Deployment
+## Deployment and infrastructure
+I used docker to spin up three containers with:
+- **Postgress Dev**: Used as a main database that does not get reset.
+- **Postgres Test**: Used only for testing and gets reset when docker shutsdown.
+- **Redis**: Used for caching.
+The API and workers run on the host (via `npm run dev`).
+
+The project runs on Render (web service + worker services). Upstash provides Redis and Render hosts Postgres. The render.yaml blueprint declares all of it (API, two worker services, Postgres) so the whole stack can be spun up from one file.
+
+Workers run as separate Render services, not inside the API container. That way a heavy
+report-generation job doesn't slow down request handling, and either side can be scaled
+independently.
+
+The Dockerfile uses a **multi-stage build**. The build stage installs all dependencies and runs `prisma generate`, then the runtime stage copies over only what's needed to run, no dev dependencies. Final image is much smaller and ships less. 
