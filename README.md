@@ -339,9 +339,11 @@ flowchart LR
 
 ## Deployment and infrastructure
 I used docker to spin up three containers with:
-- **Postgress Dev**: Used as a main database that does not get reset.
-- **Postgres Test**: Used only for testing and gets reset when docker shutsdown.
-- **Redis**: Used for caching.
+
+- **Postgres Dev** - main database, persisted in a docker volume so data survives res tarts.
+- **Postgres Test** - used only by the test suite, not persisted, so every test run starts clean.
+- **Redis** - used for caching and pub/sub. 
+
 The API and workers run on the host (via `npm run dev`).
 
 The project runs on Render (web service + worker services). Upstash provides Redis and Render hosts Postgres. The render.yaml blueprint declares all of it (API, two worker services, Postgres) so the whole stack can be spun up from one file.
