@@ -4,17 +4,20 @@
   "description": "",
   "main": "main.ts",
   "scripts": {
-    "dev": "dotenv -e .env -- npx tsx main.ts",
+    "dev:api": "dotenv -e .env -- npx tsx main.ts",
     "dev:push": "dotenv -e .env -- prisma db push",
     "dev:reset": "dotenv -e .env -- prisma migrate reset --force",
     "test:push": "dotenv -e .env.test -- prisma db push",
     "test:run": "dotenv -e .env.test -- vitest run",
-    "test": "npm run test:push && npm run test:run",
+    "test:api": "npm run test:push && npm run test:run",
     "workers": "npx concurrently \"dotenv -e .env -- npx tsx workers/notifications.worker.ts\" \"dotenv -e .env -- npx tsx workers/reports.worker.ts\"",
     "workers:test": "npx concurrently \"dotenv -e .env.test -- npx tsx workers/notifications.worker.ts\" \"dotenv -e .env.test -- npx tsx workers/reports.worker.ts\"",
     "start": "tsx main.ts",
     "start:workers": "concurrently \"tsx workers/notifications.worker.ts\" \"tsx workers/reports.worker.ts\"",
-    "migrate:deploy": "prisma migrate deploy"
+    "migrate:deploy": "prisma migrate deploy",
+    "dev": "concurrently -n api,workers -c blue,green \"npm run dev:api\" \"npm run workers\"",
+    "test": "concurrently -n test,workers -k -s first -c blue,green \"npm run test:api\" \"npm run workers:test\"",
+    "setup": "npx tsx setup.ts"
   },
   "keywords": [],
   "author": "",

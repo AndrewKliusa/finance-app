@@ -22,10 +22,10 @@ export async function notificationsRoutes(server: ZodServer) {
 
         const sub = redis.duplicate()
 
+        await sub.subscribe(`notifications:${request.user.id}`)
         sub.on("message", (_, message) => {
             reply.raw.write(`data: ${message}\n\n`)
         })
-        await sub.subscribe(`notifications:${request.user.id}`)
 
         request.raw.on("close", () => {
             sub.unsubscribe()
