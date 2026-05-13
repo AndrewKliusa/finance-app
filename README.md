@@ -400,7 +400,7 @@ With the only exception being notification tests, which require opening an SSE E
 In total, there are 7 test files, that cover all aspects of the projects with tests, totalling 152 tests. Some test are written with AI and are specifically marked as so on top of them.
 
 ### Type validation (Zod)
-Project uses **Zod** for runtime type validation. It is used to check the correntness of request bodies, queries, parameters and responses. They live in `schemas` folder.
+Project uses **Zod** for runtime type validation. It is used to check the correntness of request bodies, queries, parameters and their responses. They live in `schemas` folder.
 Exaple `schemas/tag.schema.ts:3-13`:
 ```ts
 // General schema of what tag data should be
@@ -419,3 +419,18 @@ export const TagResponseSchema = TagSchema.omit({ userId: true })
 export type TagCreateSchemaType = z.infer<typeof TagCreateSchema>
 export type TagSchemaType = z.infer<typeof TagSchema>
 ```
+
+## Areas for improvment and AI usage
+This project was a very valuable experience to me, as a learned a lot of new things! Yet, there are still things that I would like to improve in my future projects or in project of a bigger scale.
+
+- **Folder structure** could definitely use some improvment, because right now it feels a bit messy and overwhelming. I would love to instead, store every API part like Users, Categories etc. in separate folders, with their schemas, routes, services being in those folders, instead of having separate folders for all schemas, routes.
+
+- **Improve security**, specifically detecting refresh token reuse and storing them as hashes in postgres. Right now, if your refresh token is stolen, attacker will have a 30 day window into your account. Damage from this can be minimized, by revoking the refresh token, if it is used to request two working access token, because that means, that two users are using one token at the same time.
+
+- **More testing**, right now the project doesn't have any unit tests and intergration tests could use improvment, I was honestly just too lazy to do that, as it is a lot of manual labour.
+
+- **Better data management**, there are a bunch issue with how data is managed by the API, for example notifications never get stored, if there is no stream active, user will never know about them. Reports are not getting invalidated if data changes. And I am pretty sure that there are still some issues with caching, that tests just don't cover.
+
+- **No frontend**, this is something I want to learn in the near future, even though, I am not a big fan of frontend. Playing with html, css and diving into frameworks rabbit hole is something, I am not very excited about.
+
+**CI/CD**
