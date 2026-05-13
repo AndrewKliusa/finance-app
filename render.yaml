@@ -7,7 +7,7 @@ services:
     env: docker
     plan: free
     healthCheckPath: /api/v1/health
-    dockerCommand: npm run migrate:deploy && npm run start
+    dockerCommand: sh -c "echo '--- migrating' && npx prisma migrate deploy && echo '--- migrate done' && echo '--- starting tsx' && exec npx tsx main.ts"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
