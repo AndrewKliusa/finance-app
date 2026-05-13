@@ -1,6 +1,6 @@
 # Finance Tracker API
 
-#### Finance tracker API is a backend for an application that track your finances. <br>This project was made to illustrate my programming skills, as I am too young to have any real experience yet.
+#### Finance tracker API is a backend for an application that tracks your finances. <br>This project was made to illustrate my programming skills, as I am too young to have any real experience yet.
 
 ## Contents
 - [Features](#features)
@@ -15,6 +15,7 @@
 - [Notifications](#notifications)
 - [Deployment](#deployment)
 - [Testing and type validation (Zod)](#testing-and-type-validation-zod)
+- [Areas for improvement and AI usage](#areas-for-improvement-and-ai-usage)
 
 ## Features
 - Stores your transactions inside a database.
@@ -117,11 +118,11 @@ Pushes the schema to the test DB, runs all 152 integration tests, and spins up w
 
 I used **JWT** to generate access and refresh tokens for every user.
 
-**Access token** - expires in 15 minutes. Used to gain access to the API. It is required in authorization header with every request, and gets checked against a token secret to verify it. Access token is stateless, so it is not stored anywhere on the server, this eliminates a need for a DB-look up on every request.
+**Access token** - expires in 15 minutes. Used to gain access to the API. It is required in the authorization header with every request, and the server verifies its signature using a secret key. The access token is stateless, so it is not stored anywhere on the server; this eliminates the need for a DB lookup on every request.
 
-**Refresh token** - expires in 30 days. Used to get a new access token. It is stored in postgres and is mirrored to redis for faster look-ups. It is generated on registration/login and gets revoked on logout.
+**Refresh token** - expires in 30 days. Used to get a new access token. It is stored in Postgres and mirrored to Redis for faster lookups. It is generated on registration/login and gets revoked on logout.
 
-There are also admin users, that can edit any other user in the system. From the start, seed generates one admin user, that can later promote other users to admins.
+There are also admin users who can edit any other user in the system. From the start, the seed generates one admin user, who can later promote other users to admins.
 
 Authentication flow diagram:
 ```mermaid
@@ -157,7 +158,7 @@ flowchart TB
 | PATCH  | `/users/:id/password` | access + self/admin | Change password (requires old password)                    |
 | DELETE | `/users/:id`          | access + admin      | Delete user, revoke their refresh tokens                   |
 
-User routes consist of CRUD operations, that are safe guarded by authentication pre-handler, that validates user refresh token. All users are stored to prisma and are cached to redis using read-through cache with TTL and write-through invalidation on mutations.
+User routes consist of CRUD operations that are safeguarded by an authentication pre-handler, which validates the user's access token. All users are stored in Postgres and cached in Redis using a read-through cache with TTL and write-through invalidation on mutations.
 
 (`routes\users.route.ts:44-73`)
 ```ts
@@ -195,7 +196,7 @@ server.get("/users/:id", {
 })
 ```
 
-There is also pagination implemented on the (GET) /users route for retrieving a lot of users at once. It accepts page number and limit of how many users to take. Pages also get cached, to avoid an expensive query if request gets repeated, but pages also get invalidated if any user information changes.
+There is also pagination implemented on the `GET /users` route for retrieving a lot of users at once. It accepts a page number and a limit for how many users to take. Pages also get cached to avoid an expensive query if the request gets repeated, but pages get invalidated if any user information changes.
 
 This is how user schema looks:
 
@@ -225,10 +226,10 @@ model User {
 | PATCH  | `/categories/:id` &nbsp;·&nbsp; `/tags/:id`           | access + owner      | Edit a category/tag, refresh its cache entry                      |
 | DELETE | `/categories/:id` &nbsp;·&nbsp; `/tags/:id`           | access + owner      | Delete a category/tag, remove from cache                          |
 
-Every transaction can be assigned to one category and any number of tags. For example: a $20 transaction in category "Food" with tags "Restaurant" and "Bought for a friend".
+Every transaction can be assigned to one category and any number of tags. For example: a $20 transaction in the category "Food" with tags "Restaurant" and "Bought for a friend".
 
 ### Budgets
-Each category has a **budget**, which is basically a spending limit. When user's spending in that category exceeds the limit, they get a notification. There is also a **global budget** that applies across all transactions (including ones with no category), and works the same way.
+Each category has a **budget**, which is basically a spending limit. When the user's spending in that category exceeds the limit, they get a notification. There is also a **global budget** that applies across all transactions (including ones with no category) and works the same way.
 
 ### Caching
 Categories and tags use a different cache layout from users. Each record is stored as a Redis **hash** under `category:{id}` or `tag:{id}`, and the ids of records owned by a user are tracked in a Redis **set** under `user:{userId}:categories`.
@@ -238,7 +239,7 @@ This lets us:
 - Read or update one field without rewriting the rest: `HGET category:{id} name`
 - List all of a user's records in one set read plus N parallel hash reads, instead of scanning Redis
 
-Mutations are write-through, the cache is updated alongside Postgres on every change, so there is no TTL.
+Mutations are write-through: the cache is updated alongside Postgres on every change, so there is no TTL.
 
 ## Transactions
 
@@ -250,7 +251,7 @@ Mutations are write-through, the cache is updated alongside Postgres on every ch
 | PATCH  | `/transactions/:id`        | access + owner      | Edit a transaction, re-fires the budget-check job for OUTCOMEs    |
 | DELETE | `/transactions/:id`        | access + owner      | Delete a transaction, re-fires the budget-check job for OUTCOMEs  |
 
-Each transaction has an amount, a type (`INCOME` or `OUTCOME`), an optional description, optional category and any number of tags. Amounts are stored as integers (in cents) to avoid floating-point precision issues with money. Categories and tags are optional on purpose, such transactions fall under user's global budget.
+Each transaction has an amount, a type (`INCOME` or `OUTCOME`), an optional description, an optional category, and any number of tags. Amounts are stored as integers (in cents) to avoid floating-point precision issues with money. Categories and tags are optional on purpose; such transactions fall under the user's global budget.
 
 ```prisma
 model Transaction {
@@ -273,7 +274,7 @@ model Transaction {
 | ------ | ----------------------------- | ------ | ------------------------------------------------------------ |
 | GET    | `/report?year=YYYY&month=MM`  | access | Returns the report if it exists (200), else queues it (202)  |
 
-Reports are generated by a BullMQ worker that runs independently from the API. The first call to `/report` for a given month returns `202 Report is being generated` and queues a job. The worker runs a few prisma aggregations (plus a raw SQL daily-trend query) and writes the finished report to Postgres. The next call returns `200` with the data.
+Reports are generated by a BullMQ worker that runs independently from the API. The first call to `/report` for a given month returns `202 Report is being generated` and queues a job. The worker runs a few Prisma aggregations (plus a raw SQL daily-trend query) and writes the finished report to Postgres. The next call returns `200` with the data.
 
 Each report contains:
 - **Summary** - total income, total expenses, net, transaction count.
@@ -281,7 +282,7 @@ Each report contains:
 - **Daily trend** - per-day income vs expenses for the month.
 - **Top transactions** - the 5 largest transactions of the month.
 
-Job ids are deterministic (`report-{userId}-{year}-{month}`), so spamming the endpoint while a job is in flight doesn't queue duplicates, BullMQ deduplicates by `jobId`.
+Job ids are deterministic (`report-{userId}-{year}-{month}`), so spamming the endpoint while a job is in flight doesn't queue duplicates — BullMQ deduplicates by `jobId`.
 
 ```mermaid
 flowchart TB
@@ -299,20 +300,20 @@ flowchart TB
     style H fill:#eef
 ```
 
-The dashed arrow back to the client shows what happens *next time* they hit `/report`, the worker has finished, the report exists, the call goes down the green path.
+The dashed arrow back to the client shows what happens *next time* they hit `/report`: the worker has finished, the report exists, and the call goes down the green path.
 
 ## Notifications
 | Method | Path                                 | Auth                | Description                                  |
 | ------ | ------------------------------------ | ------------------- | -------------------------------------------- |
 | GET    | `/notifications/stream?token=...`    | notifications token | Open SSE stream for the current user         |
 
-Notifications are implemented via an SSE event stream. User recieves them:
-- When finance report finished generating.
-- When user exceeds category budget.
+Notifications are implemented via an SSE event stream. The user receives them:
+- When a finance report finishes generating.
+- When the user exceeds a category budget.
 
-Notifications route accepts a **separate token**, that user gets on `auth/refreshTokens` route. The browser SSE client doesn't let you set Authorization header, so there is no way to set an access token, and passing it in the query string is too dangerous. So, instead it uses a token that is only scoped to notifications access and nothing else.
+The notifications route accepts a **separate token**, which the user gets from the `/auth/refresh` route. The browser SSE client doesn't let you set the Authorization header, so there is no way to send an access token that way, and passing it in the query string is too dangerous. So instead, it uses a token that is only scoped to notifications access and nothing else.
 
-Communication with BullMQ worker is different from reports. Notifications use **redis pub/sub** - first worker checks if incoming transaction exceeds the budget, then publishes notification text to `notifications:{userId}`, and then sub picks it up in the route logic and sends it.
+Communication with the BullMQ worker is different from reports. Notifications use **Redis pub/sub**: first, the worker checks if the incoming transaction exceeds the budget, then publishes the notification text to `notifications:{userId}`, and finally the subscriber picks it up in the route logic and sends it.
 
 Send a notification (`services/notifications.service.ts:4-11`)
 ```ts
@@ -349,7 +350,7 @@ flowchart LR
 ```
 
 ## Deployment
-I used docker to spin up three containers with:
+I used Docker to spin up three containers with:
 
 - **Postgres Dev** - main database, persisted in a docker volume so data survives restarts.
 - **Postgres Test** - used only by the test suite, not persisted, so every test run starts clean.
@@ -357,18 +358,18 @@ I used docker to spin up three containers with:
 
 The API and workers run on the host (via `npm run dev`).
 
-The project runs on Render (web service + worker services). Upstash provides Redis and Render hosts Postgres. The render.yaml blueprint declares all of it (API, two worker services, Postgres) so the whole stack can be spun up from one file.
+The project runs on Render (web service + worker services). Upstash provides Redis, and Render hosts Postgres. The `render.yaml` blueprint declares all of it (API, two worker services, Postgres), so the whole stack can be spun up from one file.
 
 Workers run as separate Render services, not inside the API container. That way a heavy
 report-generation job doesn't slow down request handling, and either side can be scaled
 independently.
 
-The Dockerfile uses a **multi-stage build**. The build stage installs all dependencies and runs `prisma generate`, then the runtime stage copies over only what's needed to run, no dev dependencies. Final image is much smaller and ships less.
+The Dockerfile uses a **multi-stage build**. The build stage installs all dependencies and runs `prisma generate`; then the runtime stage copies over only what's needed to run, with no dev dependencies. The final image is much smaller and ships less.
 
 ## Testing and type validation (Zod)
-Project uses Vitest's integration tests. With a simple `server.inject(request)`, it feeds request directly into fastify request pipeline, without binding a socket.
+The project uses Vitest for integration testing. With a simple `server.inject(request)`, it feeds a request directly into the Fastify request pipeline without binding a socket.
 
-In `tests/helpers` directory are helpers, which are factories for every route's test methods. Example:
+In the `tests/helpers` directory are helpers, which are factories for every route's test methods. Example:
 `tests/helpers/auth.helper.ts:5-14`
 ```ts
 export function authFunctionsBuilder(server: FastifyInstance) {
@@ -384,7 +385,7 @@ export function authFunctionsBuilder(server: FastifyInstance) {
 }
 ```
 
-In `tests/*.test.ts` are the test files themselves. They use the factory methods declared earlier to get access to any route's CRUD.
+In `tests/*.test.ts` are the test files themselves. They use the factory methods declared earlier to get access to any route's CRUD operations.
 
 ```ts 
 const { register } = authFunctionsBuilder(server)
@@ -396,12 +397,13 @@ it("Logins with invalid credentials", async () => {
     expect(loginRes.statusCode).toBe(401)
 })
 ```
-With the only exception being notification tests, which require opening an SSE Event stream and keeping it open.
-In total, there are 7 test files, that cover all aspects of the projects with tests, totalling 152 tests. Some test are written with AI and are specifically marked as so on top of them.
+The only exception is the notification tests, which require opening an SSE event stream and keeping it open.
+
+In total, there are 7 test files that cover all aspects of the project, totalling 152 tests. Some tests are written with AI and are specifically marked as such at the top.
 
 ### Type validation (Zod)
-Project uses **Zod** for runtime type validation. It is used to check the correntness of request bodies, queries, parameters and their responses. They live in `schemas` folder.
-Exaple `schemas/tag.schema.ts:3-13`:
+The project uses **Zod** for runtime type validation. It is used to check the correctness of request bodies, queries, parameters, and their responses. They live in the `schemas` folder.
+Example `schemas/tag.schema.ts:3-13`:
 ```ts
 // General schema of what tag data should be
 export const TagSchema = z.object({
@@ -420,17 +422,20 @@ export type TagCreateSchemaType = z.infer<typeof TagCreateSchema>
 export type TagSchemaType = z.infer<typeof TagSchema>
 ```
 
-## Areas for improvment and AI usage
-This project was a very valuable experience to me, as a learned a lot of new things! Yet, there are still things that I would like to improve in my future projects or in project of a bigger scale.
+## Areas for improvement and AI usage
+This project was a very valuable experience for me, as I learned a lot of new things! Yet, there are still things that I would like to improve in my future projects or in a project of a bigger scale.
 
-- **Folder structure** could definitely use some improvment, because right now it feels a bit messy and overwhelming. I would love to instead, store every API part like Users, Categories etc. in separate folders, with their schemas, routes, services being in those folders, instead of having separate folders for all schemas, routes.
+- **Folder structure** could definitely use some improvement, because right now it feels a bit messy and overwhelming. Instead, I would love to store every API part (Users, Categories, etc.) in separate folders, with their schemas, routes, and services living together, instead of having separate top-level folders for all schemas and routes.
 
-- **Improve security**, specifically detecting refresh token reuse and storing them as hashes in postgres. Right now, if your refresh token is stolen, attacker will have a 30 day window into your account. Damage from this can be minimized, by revoking the refresh token, if it is used to request two working access token, because that means, that two users are using one token at the same time.
+- **Improve security**, specifically detecting refresh token reuse and storing them as hashes in Postgres. Right now, if your refresh token is stolen, the attacker will have a 30-day window into your account. The damage can be minimized by revoking the refresh token if it is used to request two working access tokens, because that means two clients are using one token at the same time.
 
-- **More testing**, right now the project doesn't have any unit tests and intergration tests could use improvment, I was honestly just too lazy to do that, as it is a lot of manual labour.
+- **More testing**: right now the project doesn't have any unit tests, and the integration tests could use improvement. I was honestly just too lazy to do that, as it is a lot of manual labour.
 
-- **Better data management**, there are a bunch issue with how data is managed by the API, for example notifications never get stored, if there is no stream active, user will never know about them. Reports are not getting invalidated if data changes. And I am pretty sure that there are still some issues with caching, that tests just don't cover.
+- **Better data management**: there are a bunch of issues with how data is managed by the API. For example, notifications never get stored, so if there is no active stream, the user will never know about them. Reports do not get invalidated if data changes. And I am pretty sure that there are still some issues with caching that the tests just don't cover.
 
-- **No frontend**, this is something I want to learn in the near future, even though, I am not a big fan of frontend. Playing with html, css and diving into frameworks rabbit hole is something, I am not very excited about.
+- **No frontend** — this is something I want to learn in the near future, even though I am not a big fan of frontend. Playing with HTML, CSS, and diving into the frameworks rabbit hole is not something I am very excited about.
 
-**CI/CD**
+- **CI/CD** — I am still only familiar with this on a surface level. The `render.yaml` was generated by AI, which basically allowed me to deploy my app with just one click, and I am still relatively new to Docker and GitHub Actions. Definitely something for me to dive deeper into in the future.
+
+#### AI Usage
+All AI-generated code is clearly marked with comments. Mostly, I used it to generate more tests, the CI/CD setup, and some niche Prisma operations. Also, the diagrams in the README were enhanced by AI because mine were harder to understand, and it also helped me put together the TOC and fix spelling issues.

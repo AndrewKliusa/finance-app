@@ -45,9 +45,19 @@ export async function generateTokenPair(userId: string) {
 }
 
 export async function rotateRefreshToken(oldToken: string) {
-    const userId = await redis.get(`refreshToken:${oldToken}`)
+    let userId = await redis.get(`refreshToken:${oldToken}`)
     if (!userId) {
-        throw new Error("Invalid refresh token!")
+        const refreshToken = await prisma.refreshToken.findUnique({
+            where: { token: oldToken }
+        })
+
+        if (!refreshToken || refreshToken.expiresAt < new Date()) {
+            throw new Error("Invalid refresh token!")
+        }
+
+        userId = refreshToken.userId
+        const ttl = Math.floor((refreshToken.expiresAt.getTime() - Date.now()) / 1000)
+        await redis.set(`refreshToken:${oldToken}`, userId, 'EX', ttl)
     }
 
     const { payload } = await jwtVerify(oldToken, refreshSecret)
