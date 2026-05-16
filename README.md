@@ -1,6 +1,6 @@
 # Finance Tracker API
 
-#### Finance tracker API is a backend for an application that tracks your finances. <br>This project is made to illustrate my skills.
+#### Finance tracker API is a backend for an application that tracks your finances.<br>This project uses a modern stack and uses production-grade design patterns. It is made to illustrate my development skills.
 ## Contents
 - [Features](#features)
 - [Technical features](#technical-features)
